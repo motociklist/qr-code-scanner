@@ -1,10 +1,30 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as io;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'result_screen.dart';
+import '../services/apphud_service.dart';
+import '../services/ads_service.dart';
+import '../services/analytics_service.dart';
+import '../services/appsflyer_service.dart';
+
+// Helper to check if platform is mobile (only works on mobile)
+bool _isMobile() {
+  if (kIsWeb) return false;
+  // On web, io will be dart:html which doesn't have Platform
+  // On mobile, io will be dart:io which has Platform
+  try {
+    // ignore: avoid_dynamic_calls
+    return (io.Platform as dynamic).isAndroid == true ||
+        (io.Platform as dynamic).isIOS == true;
+  } catch (e) {
+    // On web, Platform doesn't exist, so return false
+    return false;
+  }
+}
 
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
@@ -38,15 +58,26 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       vsync: this,
     )..repeat();
     _scanLineAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _scanLineController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _scanLineController, curve: Curves.easeInOut),
     );
+
+    // Load ads
+    AdsService.instance.loadInterstitialAd();
+
+    // Log screen view
+    AnalyticsService.instance.logScreenView('qr_scanner_screen');
   }
 
   Future<void> _checkCameraPermission() async {
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (kIsWeb) {
+      // Web platform - camera access handled differently
+      setState(() {
+        _isPermissionGranted = true; // Assume granted for web
+      });
+      return;
+    }
+
+    if (_isMobile()) {
       final status = await Permission.camera.request();
       setState(() {
         _isPermissionGranted = status.isGranted;
@@ -102,6 +133,17 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         });
 
         HapticFeedback.mediumImpact();
+
+        // Check subscription for unlimited scans
+        if (!ApphudService.instance.canUseFeature('unlimited_scans')) {
+          // Show ad or limit
+          AdsService.instance.showInterstitialAd();
+          // Log event to AppsFlyer
+          AppsFlyerService.instance.logEvent('qr_scan_free');
+        } else {
+          AppsFlyerService.instance.logEvent('qr_scan_premium');
+        }
+
         _showResultDialog(code);
       }
     }
@@ -110,9 +152,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   void _showResultDialog(String code) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => ResultScreen(code: code),
-      ),
+      MaterialPageRoute(builder: (context) => ResultScreen(code: code)),
     );
   }
 
@@ -123,13 +163,27 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       );
 
       if (image != null) {
-        final File imageFile = File(image.path);
-        final BarcodeCapture? capture = await controller.analyzeImage(imageFile.path);
+        // Use image path directly - mobile_scanner handles both File and path strings
+        final imagePath = image.path;
+        final BarcodeCapture? capture = await controller.analyzeImage(
+          imagePath,
+        );
 
         if (capture != null && capture.barcodes.isNotEmpty) {
           final String code = capture.barcodes.first.rawValue ?? '';
           if (code.isNotEmpty) {
             HapticFeedback.mediumImpact();
+
+            // Check subscription
+            if (!ApphudService.instance.canUseFeature('unlimited_scans')) {
+              AdsService.instance.showInterstitialAd();
+              AppsFlyerService.instance.logEvent('qr_scan_from_gallery_free');
+            } else {
+              AppsFlyerService.instance.logEvent(
+                'qr_scan_from_gallery_premium',
+              );
+            }
+
             _showResultDialog(code);
           } else {
             _showErrorDialog('No QR code found in the selected image.');
@@ -160,14 +214,24 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   }
 
   void _toggleTorch() {
+    if (kIsWeb) return; // Torch not supported on web
     setState(() {
       _isTorchOn = !_isTorchOn;
     });
-    controller.toggleTorch();
+    try {
+      controller.toggleTorch();
+    } catch (e) {
+      debugPrint('Error toggling torch: $e');
+    }
   }
 
   void _switchCamera() {
-    controller.switchCamera();
+    if (kIsWeb) return; // Camera switching not fully supported on web
+    try {
+      controller.switchCamera();
+    } catch (e) {
+      debugPrint('Error switching camera: $e');
+    }
   }
 
   @override
@@ -187,9 +251,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             // Top section with title and info card
             _buildTopSection(),
             // Scanning area
-            Expanded(
-              child: _buildScanningArea(),
-            ),
+            Expanded(child: _buildScanningArea()),
             // Bottom controls
             _buildBottomControls(),
           ],
@@ -252,10 +314,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                       const SizedBox(height: 4),
                       Text(
                         'Keep your device steady',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -274,18 +333,11 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.camera_alt_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.camera_alt_outlined, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 20),
             Text(
               'Camera permission required',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 18),
             ),
           ],
         ),
@@ -298,10 +350,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.blue[300]!,
-            width: 2,
-          ),
+          border: Border.all(color: Colors.blue[300]!, width: 2),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
@@ -418,5 +467,4 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       ],
     );
   }
-
 }

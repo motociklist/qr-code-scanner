@@ -83,7 +83,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
               title: const Text('Edit'),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Implement edit functionality
+
               },
             ),
             ListTile(
