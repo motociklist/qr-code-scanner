@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:ui' as ui;
 import '../models/saved_qr_code.dart';
@@ -230,15 +229,18 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
 
-      final result = await ImageGallerySaver.saveImage(
-        byteData.buffer.asUint8List(),
-        quality: 100,
-        name: 'qr_code_${DateTime.now().millisecondsSinceEpoch}',
-      );
+      // Save to temporary directory and share
+      final directory = await getTemporaryDirectory();
+      final fileName = 'qr_code_${DateTime.now().millisecondsSinceEpoch}.png';
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+
+      // Share the image file
+      await Share.shareXFiles([XFile(file.path)], text: 'QR Code');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['isSuccess'] == true ? 'Image saved to gallery' : 'Failed to save image')),
+          const SnackBar(content: Text('QR code image ready to share')),
         );
       }
     } catch (e) {
