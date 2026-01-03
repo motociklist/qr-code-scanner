@@ -13,6 +13,7 @@ import '../services/ads_service.dart';
 import '../services/appsflyer_service.dart';
 import '../services/history_service.dart';
 import '../models/scan_history_item.dart';
+import '../utils/navigation_helper.dart';
 import 'pricing_screen.dart';
 
 enum QRType {
@@ -105,7 +106,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             mailto += 'subject=${Uri.encodeComponent(subject)}';
           }
           if (body.isNotEmpty) {
-            mailto += subject.isNotEmpty ? '&body=${Uri.encodeComponent(body)}' : 'body=${Uri.encodeComponent(body)}';
+            mailto += subject.isNotEmpty
+                ? '&body=${Uri.encodeComponent(body)}'
+                : 'body=${Uri.encodeComponent(body)}';
           }
         }
         return mailto;
@@ -139,7 +142,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   String _buildWiFiString() {
     final ssid = _controllers[QRType.wifi]!['ssid']!.text.trim();
     final password = _controllers[QRType.wifi]!['password']!.text.trim();
-    final security = _controllers[QRType.wifi]!['security']!.text.trim().toUpperCase();
+    final security =
+        _controllers[QRType.wifi]!['security']!.text.trim().toUpperCase();
     return 'WIFI:T:$security;S:$ssid;P:$password;;';
   }
 
@@ -175,7 +179,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Premium Required'),
-        content: const Text('Creating QR codes requires a premium subscription.'),
+        content:
+            const Text('Creating QR codes requires a premium subscription.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -184,10 +189,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PricingScreen()),
-              );
+              NavigationHelper.push(context, const PricingScreen());
             },
             child: const Text('Subscribe'),
           ),
@@ -236,7 +238,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     if (_generatedQRData == null) return;
 
     try {
-      final boundary = _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
@@ -270,7 +273,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     if (_generatedQRData == null) return;
 
     try {
-      final boundary = _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         await Share.share(_generatedQRData!);
         return;
@@ -284,7 +288,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       }
 
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.png');
+      final file = File(
+          '${tempDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
       await Share.shareXFiles([XFile(file.path)], text: _generatedQRData!);
@@ -632,7 +637,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     required IconData icon,
     required List<String> options,
   }) {
-    final initialValue = controller.text.isEmpty ? options.first : controller.text;
+    final initialValue =
+        controller.text.isEmpty ? options.first : controller.text;
     return DropdownButtonFormField<String>(
       initialValue: initialValue,
       decoration: InputDecoration(
