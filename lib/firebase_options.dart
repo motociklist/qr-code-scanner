@@ -52,45 +52,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyAPjfcD8Rws6llDbNPrG_cSuGS6BpjJpHE',
+    appId: '1:281741019162:android:d826aacfb8a150227f69a3',
+    messagingSenderId: '281741019162',
+    projectId: 'qr-code-scranner--247',
+    storageBucket: 'qr-code-scranner--247.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyDFe2mvCI3jDsOneIJgtBNF2tPLmZ-PHPk',
+    appId: '1:281741019162:ios:1bd6d191dd6dc79d7f69a3',
+    messagingSenderId: '281741019162',
+    projectId: 'qr-code-scranner--247',
+    storageBucket: 'qr-code-scranner--247.firebasestorage.app',
     iosBundleId: 'com.example.qrCodeScanner',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_MACOS_API_KEY',
-    appId: 'YOUR_MACOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyDFe2mvCI3jDsOneIJgtBNF2tPLmZ-PHPk',
+    appId: '1:281741019162:ios:1bd6d191dd6dc79d7f69a3',
+    messagingSenderId: '281741019162',
+    projectId: 'qr-code-scranner--247',
+    storageBucket: 'qr-code-scranner--247.firebasestorage.app',
     iosBundleId: 'com.example.qrCodeScanner',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR_WINDOWS_API_KEY',
-    appId: 'YOUR_WINDOWS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyCFSkVO7D0WLwnsEAiqGl8Q73_Bjxq3etM',
+    appId: '1:281741019162:web:966e5bb3a1ef16957f69a3',
+    messagingSenderId: '281741019162',
+    projectId: 'qr-code-scranner--247',
+    authDomain: 'qr-code-scranner--247.firebaseapp.com',
+    storageBucket: 'qr-code-scranner--247.firebasestorage.app',
+    measurementId: 'G-PMVQE09K0K',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
+    apiKey: 'AIzaSyCFSkVO7D0WLwnsEAiqGl8Q73_Bjxq3etM',
+    appId: '1:281741019162:web:aedb1d273360bfc77f69a3',
+    messagingSenderId: '281741019162',
+    projectId: 'qr-code-scranner--247',
+    authDomain: 'qr-code-scranner--247.firebaseapp.com',
+    storageBucket: 'qr-code-scranner--247.firebasestorage.app',
+    measurementId: 'G-GZ2LS9YDET',
   );
 }
