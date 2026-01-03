@@ -16,6 +16,14 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  /// Check if Firebase configuration is valid (not using placeholder values)
+  static bool get isConfigured {
+    final options = currentPlatform;
+    return !options.apiKey.startsWith('YOUR_') &&
+        !options.appId.startsWith('YOUR_') &&
+        !options.projectId.startsWith('YOUR_');
+  }
+
   static FirebaseOptions get currentPlatform {
     // Web platform detection
     if (kIsWeb) {
