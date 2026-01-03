@@ -122,10 +122,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 height: 60,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [
-                        const Color(0xFF7ACBFF), // 0% - light blue
-                        const Color(0xFF4DA6FF), // 100% - darker blue
+                        Color(0xFF7ACBFF), // 0% - light blue
+                        Color(0xFF4DA6FF), // 100% - darker blue
                       ],
                     ),
                     borderRadius: BorderRadius.circular(18),
@@ -159,7 +159,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
             ),
-            // Skip button at bottom
+            // Skip button at bottom (hidden on last page)r
+
             Padding(
               padding: const EdgeInsets.only(bottom: 50),
               child: TextButton(
@@ -181,7 +182,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget _buildPage(OnboardingPage page, bool isFirstPage, int pageIndex) {
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.only(
+        padding: const EdgeInsets.only(
           top: 90.0,
           left: 24.0,
           right: 24.0,
@@ -198,10 +199,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
             // Illustration
             _buildIllustration(page, isFirstPage),
+            const SizedBox(height: 20),
             // Subtitle
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 1.0, // 24 (parent) + 1 = 25px from edge
+                horizontal: 17.0, // 24 (parent) + 17 = 41px from edge
               ),
               child: Text(
                 page.subtitle,
@@ -300,7 +302,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           // Label
-          Align(
+          const Align(
             alignment: Alignment.centerLeft,
             child: Text(
               'Website URL',
@@ -308,7 +310,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 fontSize: 13.08,
                 fontWeight: FontWeight.w500, // Medium
                 letterSpacing: -0.44,
-                color: const Color(0xFF111111),
+                color: Color(0xFF111111),
               ),
             ),
           ),
@@ -356,10 +358,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             height: 52,
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [
-                    const Color(0xFF7ACBFF), // 0% - light blue
-                    const Color(0xFF4DA6FF), // 100% - darker blue
+                    Color(0xFF7ACBFF), // 0% - light blue
+                    Color(0xFF4DA6FF), // 100% - darker blue
                   ],
                 ),
                 borderRadius: BorderRadius.circular(18),
@@ -406,117 +408,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildManageIllustration() {
     return SizedBox(
-      height: 300,
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.85,
-        ),
-        itemCount: 4,
-        itemBuilder: (context, index) {
-          return _buildQRCard(index);
-        },
-      ),
-    );
-  }
-
-  Widget _buildQRCard(int index) {
-    final titles = ['My Website', 'Contact Info', 'My Website', 'Contact Info'];
-    final subtitles = [
-      'portfolio.com',
-      'John Doe vCard',
-      'portfolio.com',
-      'John Doe vCard'
-    ];
-    final dates = [
-      'Dec 15, 2024',
-      'Dec 12, 2024',
-      'Dec 15, 2024',
-      'Dec 12, 2024'
-    ];
-    final views = [67, 12, 67, 12];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.blue[400],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.qr_code,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const Icon(Icons.more_vert, size: 20, color: Colors.grey),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              titles[index],
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitles[index],
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  dates[index],
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.visibility, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${views[index]}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+      height: 320,
+      width: double.infinity,
+      child: Center(
+        child: Image.asset(
+          'assets/images/board4.png',
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: 320,
         ),
       ),
     );
