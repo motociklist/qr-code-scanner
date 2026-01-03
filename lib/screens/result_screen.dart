@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/scan_history_item.dart';
 import '../services/history_service.dart';
@@ -205,20 +205,22 @@ class _ResultScreenState extends State<ResultScreen> {
 
     try {
       final contact = Contact(
-        givenName: _parsedData['name'] ?? '',
-        phones: _parsedData['phone'] != null
-            ? [Item(label: 'mobile', value: _parsedData['phone']!)]
-            : [],
-        emails: _parsedData['email'] != null
-            ? [Item(label: 'work', value: _parsedData['email']!)]
-            : [],
+        name: Name(first: _parsedData['name'] ?? ''),
       );
 
-      if (_parsedData['organization'] != null) {
-        contact.company = _parsedData['organization'];
+      if (_parsedData['phone'] != null) {
+        contact.phones = [Phone(_parsedData['phone']!, label: PhoneLabel.mobile)];
       }
 
-      await ContactsService.addContact(contact);
+      if (_parsedData['email'] != null) {
+        contact.emails = [Email(_parsedData['email']!, label: EmailLabel.work)];
+      }
+
+      if (_parsedData['organization'] != null) {
+        contact.organizations = [Organization(company: _parsedData['organization']!)];
+      }
+
+      await FlutterContacts.insertContact(contact);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
