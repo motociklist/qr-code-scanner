@@ -198,11 +198,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
             // Illustration
             _buildIllustration(page, isFirstPage),
-            const SizedBox(height: 10),
             // Subtitle
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 14.0, // 24 (parent) + 14 = 38px from edge
+                horizontal: 1.0, // 24 (parent) + 1 = 25px from edge
               ),
               child: Text(
                 page.subtitle,
@@ -260,6 +259,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           fit: BoxFit.contain,
           width: double.infinity,
           height: isFirstPage ? 350 : 300,
+          placeholderBuilder: (context) => const SizedBox(
+            width: double.infinity,
+            height: 350,
+          ),
         ),
       ),
     );
@@ -282,90 +285,121 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildCreateIllustration() {
     return Container(
-      height: 320,
-      padding: const EdgeInsets.all(20),
+      height: 340,
+      padding: const EdgeInsets.only(
+        top: 10,
+        bottom: 0,
+        left: 40,
+        right: 40,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.blue[50]!,
-            Colors.white,
-          ],
-        ),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Input field
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.link, color: Colors.grey[600], size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'https://example.com',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Website URL',
+              style: TextStyle(
+                fontSize: 13.08,
+                fontWeight: FontWeight.w500, // Medium
+                letterSpacing: -0.44,
+                color: const Color(0xFF111111),
               ),
             ),
-            const SizedBox(height: 12),
-            // Generate button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          const SizedBox(height: 8),
+          // Input field
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'https://example.com',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SvgPicture.asset(
+                  'assets/images/board3-link.svg',
+                  width: 17,
+                  height: 13,
+                  fit: BoxFit.contain,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xFF9E9E9E),
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // QR code image
+
+          // Generate button
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.blue[400]!,
-                    Colors.blue[600]!,
+                    const Color(0xFF7ACBFF), // 0% - light blue
+                    const Color(0xFF4DA6FF), // 100% - darker blue
                   ],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4DA6FF).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: const Text(
-                'Generate QR Code',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                ),
+                child: Text(
+                  'Generate QR Code',
+                  style: AppStyles.body.copyWith(
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            // QR code result
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.qr_code,
-                size: 60,
-                color: Colors.blue,
-              ),
+          ),
+          Center(
+            child: SvgPicture.asset(
+              'assets/images/board3-qr.svg',
+              width: 153,
+              height: 153,
+              fit: BoxFit.contain,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }
