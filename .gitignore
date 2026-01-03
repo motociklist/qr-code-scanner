@@ -92,5 +92,26 @@ app.*.map.json
 
 # Firebase configuration files (add your own)
 /android/app/google-services.json
+/android/app/src/main/google-services.json
 /ios/Runner/GoogleService-Info.plist
+
+# Android build and generated files
+/android/app/build/
+/android/build/
+/android/.gradle/
+/android/local.properties
+/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# Linux ephemeral files
+/linux/flutter/ephemeral/
+
+# Generated files
+**/GeneratedPluginRegistrant.*
+
+# IDE files
+.vscode/
+*.code-workspace
+
+# OS files
+Thumbs.db
 
