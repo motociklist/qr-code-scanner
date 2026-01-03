@@ -10,6 +10,8 @@ import '../components/filter_chips.dart';
 import '../components/empty_state.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
+import '../utils/navigation_helper.dart';
+import '../utils/dialog_helper.dart';
 import 'result_screen.dart';
 
 class MyQRCodesScreen extends StatefulWidget {
@@ -73,11 +75,9 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
               title: const Text('View Details'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
+                NavigationHelper.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ResultScreen(code: code.content, fromHistory: true),
-                  ),
+                  ResultScreen(code: code.content, fromHistory: true),
                 );
                 _savedQRService.incrementViewCount(code.id);
                 setState(() {});
@@ -114,26 +114,15 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
   }
 
   Future<void> _deleteCode(SavedQRCode code) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogHelper.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete QR Code'),
-        content: Text('Are you sure you want to delete "${code.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete QR Code',
+      content: 'Are you sure you want to delete "${code.title}"?',
+      confirmText: 'Delete',
+      isDestructive: true,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await _savedQRService.deleteCode(code.id);
       setState(() {});
       if (mounted) {

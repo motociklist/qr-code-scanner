@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/navigation_helper.dart';
 import 'home_screen.dart';
 import 'onboarding_screen.dart';
 
@@ -59,13 +60,10 @@ class _SplashScreenState extends State<SplashScreen>
           prefs.getBool('onboarding_completed') ?? false;
 
       if (mounted) {
-        Navigator.pushReplacement(
+        NavigationHelper.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => onboardingCompleted
-                ? const HomeScreen()
-                : const OnboardingScreen(),
-          ),
+          onboardingCompleted ? const HomeScreen() : const OnboardingScreen(),
+          replace: true,
         );
       }
     });
@@ -157,7 +155,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildBackgroundImage(Size screenSize) {
     // Используем правильный путь для каждой платформы
-    final imagePath = kIsWeb
+    const imagePath = kIsWeb
         ? 'images/screen/bg-loading.png' // Для веб без префикса assets/
         : 'assets/images/screen/bg-loading.png'; // Для мобильных с префиксом
 

@@ -8,6 +8,8 @@ import '../components/empty_state.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../utils/qr_type_helper.dart';
+import '../utils/navigation_helper.dart';
+import '../utils/dialog_helper.dart';
 import 'result_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -200,14 +202,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ResultScreen(code: item.code, fromHistory: true),
-            ),
-          );
-        },
+        onTap: () => NavigationHelper.push(
+          context,
+          ResultScreen(code: item.code, fromHistory: true),
+        ),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -288,26 +286,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _deleteItem(ScanHistoryItem item) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogHelper.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: const Text('Are you sure you want to delete this item from history?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Item',
+      content: 'Are you sure you want to delete this item from history?',
+      confirmText: 'Delete',
+      isDestructive: true,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await _historyService.removeScan(item.id);
       setState(() {});
       if (mounted) {
@@ -322,26 +309,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _clearAllHistory() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogHelper.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear All History'),
-        content: const Text('Are you sure you want to delete all history? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear All'),
-          ),
-        ],
-      ),
+      title: 'Clear All History',
+      content: 'Are you sure you want to delete all history? This action cannot be undone.',
+      confirmText: 'Clear All',
+      isDestructive: true,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await _historyService.clearHistory();
       setState(() {});
       if (mounted) {

@@ -5,9 +5,18 @@ import '../models/scan_history_item.dart';
 
 class HistoryService extends ChangeNotifier {
   static const String _key = 'scan_history';
-  static final HistoryService _instance = HistoryService._internal();
-  factory HistoryService() => _instance;
+  static HistoryService? _instance;
+
   HistoryService._internal();
+
+  /// Singleton instance - consistent with other services
+  static HistoryService get instance {
+    _instance ??= HistoryService._internal();
+    return _instance!;
+  }
+
+  /// Factory constructor for backward compatibility
+  factory HistoryService() => instance;
 
   List<ScanHistoryItem> _history = [];
   bool _isLoaded = false;
