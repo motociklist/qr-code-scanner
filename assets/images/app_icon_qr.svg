@@ -1,0 +1,89 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" fill="#FFFFFF"/>
+
+  <!-- Simple QR code pattern -->
+  <g fill="#000000">
+    <!-- Corner squares -->
+    <!-- Top-left -->
+    <rect x="0" y="0" width="280" height="280"/>
+    <rect x="40" y="40" width="200" height="200" fill="#FFFFFF"/>
+    <rect x="80" y="80" width="120" height="120"/>
+
+    <!-- Top-right -->
+    <rect x="744" y="0" width="280" height="280"/>
+    <rect x="784" y="40" width="200" height="200" fill="#FFFFFF"/>
+    <rect x="824" y="80" width="120" height="120"/>
+
+    <!-- Bottom-left -->
+    <rect x="0" y="744" width="280" height="280"/>
+    <rect x="40" y="784" width="200" height="200" fill="#FFFFFF"/>
+    <rect x="80" y="824" width="120" height="120"/>
+
+    <!-- Alignment pattern (center) -->
+    <rect x="392" y="392" width="240" height="240"/>
+    <rect x="432" y="432" width="160" height="160" fill="#FFFFFF"/>
+    <rect x="472" y="472" width="80" height="80"/>
+
+    <!-- Data pattern -->
+    <rect x="320" y="40" width="40" height="40"/>
+    <rect x="400" y="40" width="40" height="40"/>
+    <rect x="480" y="40" width="40" height="40"/>
+    <rect x="560" y="40" width="40" height="40"/>
+    <rect x="640" y="40" width="40" height="40"/>
+    <rect x="680" y="40" width="40" height="40"/>
+
+    <rect x="320" y="120" width="40" height="40"/>
+    <rect x="480" y="120" width="40" height="40"/>
+    <rect x="600" y="120" width="40" height="40"/>
+
+    <rect x="360" y="200" width="40" height="40"/>
+    <rect x="440" y="200" width="40" height="40"/>
+    <rect x="520" y="200" width="40" height="40"/>
+    <rect x="680" y="200" width="40" height="40"/>
+
+    <rect x="320" y="280" width="40" height="40"/>
+    <rect x="400" y="280" width="40" height="40"/>
+    <rect x="560" y="280" width="40" height="40"/>
+
+    <!-- Right side pattern -->
+    <rect x="944" y="320" width="40" height="40"/>
+    <rect x="944" y="400" width="40" height="40"/>
+    <rect x="944" y="480" width="40" height="40"/>
+    <rect x="944" y="560" width="40" height="40"/>
+    <rect x="944" y="640" width="40" height="40"/>
+    <rect x="944" y="720" width="40" height="40"/>
+
+    <!-- Bottom pattern -->
+    <rect x="40" y="944" width="40" height="40"/>
+    <rect x="120" y="944" width="40" height="40"/>
+    <rect x="200" y="944" width="40" height="40"/>
+    <rect x="320" y="944" width="40" height="40"/>
+    <rect x="440" y="944" width="40" height="40"/>
+    <rect x="520" y="944" width="40" height="40"/>
+    <rect x="600" y="944" width="40" height="40"/>
+    <rect x="680" y="944" width="40" height="40"/>
+    <rect x="760" y="944" width="40" height="40"/>
+    <rect x="840" y="944" width="40" height="40"/>
+    <rect x="920" y="944" width="40" height="40"/>
+
+    <!-- Additional data cells -->
+    <rect x="360" y="360" width="40" height="40"/>
+    <rect x="600" y="360" width="40" height="40"/>
+    <rect x="720" y="360" width="40" height="40"/>
+
+    <rect x="360" y="600" width="40" height="40"/>
+    <rect x="600" y="600" width="40" height="40"/>
+    <rect x="720" y="600" width="40" height="40"/>
+
+    <rect x="320" y="760" width="40" height="40"/>
+    <rect x="400" y="760" width="40" height="40"/>
+    <rect x="480" y="760" width="40" height="40"/>
+    <rect x="640" y="760" width="40" height="40"/>
+    <rect x="720" y="760" width="40" height="40"/>
+
+    <rect x="360" y="840" width="40" height="40"/>
+    <rect x="520" y="840" width="40" height="40"/>
+    <rect x="680" y="840" width="40" height="40"/>
+  </g>
+</svg>
+
