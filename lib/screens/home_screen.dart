@@ -144,6 +144,33 @@ class HomeTabScreen extends StatefulWidget {
 class _HomeTabScreenState extends State<HomeTabScreen> {
   final HistoryService _historyService = HistoryService();
 
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+    // Слушаем изменения истории
+    _historyService.addListener(_onHistoryChanged);
+  }
+
+  @override
+  void dispose() {
+    _historyService.removeListener(_onHistoryChanged);
+    super.dispose();
+  }
+
+  void _onHistoryChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadHistory() async {
+    await _historyService.loadHistory();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   String _getTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
@@ -157,6 +184,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     } else {
       return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Обновляем историю при появлении экрана
+    _loadHistory();
   }
 
   @override

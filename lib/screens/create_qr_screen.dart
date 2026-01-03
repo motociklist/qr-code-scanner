@@ -11,6 +11,8 @@ import '../services/apphud_service.dart';
 import '../services/analytics_service.dart';
 import '../services/ads_service.dart';
 import '../services/appsflyer_service.dart';
+import '../services/history_service.dart';
+import '../models/scan_history_item.dart';
 import 'pricing_screen.dart';
 
 enum QRType {
@@ -209,6 +211,18 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
 
     await SavedQRService.instance.saveCode(qrCode);
+
+    // Также сохраняем в историю сканирований с action='Created'
+    final historyService = HistoryService();
+    await historyService.loadHistory();
+    final historyItem = ScanHistoryItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      code: _generatedQRData!,
+      timestamp: DateTime.now(),
+      type: type,
+      action: 'Created',
+    );
+    await historyService.addScan(historyItem);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
