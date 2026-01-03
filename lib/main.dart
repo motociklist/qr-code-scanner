@@ -22,14 +22,18 @@ void main() async {
     ]);
   }
 
-  // Initialize Firebase
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint('Error initializing Firebase: $e');
-    // Continue without Firebase if initialization fails
+  // Initialize Firebase (skip on web if not configured)
+  if (!kIsWeb || DefaultFirebaseOptions.isConfigured) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      debugPrint('Error initializing Firebase: $e');
+      // Continue without Firebase if initialization fails
+    }
+  } else {
+    debugPrint('Firebase web configuration not set up. Skipping initialization.');
   }
 
   // Initialize mobile-only services
@@ -70,11 +74,15 @@ void main() async {
     }
   }
 
-  // Initialize Analytics (works on web too)
-  try {
-    await AnalyticsService.instance.initialize();
-  } catch (e) {
-    debugPrint('Error initializing Firebase Analytics: $e');
+  // Initialize Analytics (works on web too, but skip if Firebase not configured)
+  if (!kIsWeb || DefaultFirebaseOptions.isConfigured) {
+    try {
+      await AnalyticsService.instance.initialize();
+    } catch (e) {
+      debugPrint('Error initializing Firebase Analytics: $e');
+    }
+  } else {
+    debugPrint('Firebase Analytics skipped: web configuration not set up.');
   }
 
   runApp(const QRCodeScannerApp());
