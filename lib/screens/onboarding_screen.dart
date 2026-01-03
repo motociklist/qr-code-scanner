@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/navigation_helper.dart';
+import '../constants/app_styles.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -91,9 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _currentPage == 0
-          ? const Color(0xFFE3F2FD) // Light blue background for first page
-          : Colors.grey[100],
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -120,22 +119,30 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: SizedBox(
                 width: double.infinity,
+                height: 60,
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.blue[400]!,
-                        Colors.blue[600]!,
+                        const Color(0xFF7ACBFF), // 0% - light blue
+                        const Color(0xFF4DA6FF), // 100% - darker blue
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4DA6FF).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ElevatedButton(
                     onPressed: _nextPage,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -144,9 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       _currentPage == _pages.length - 1
                           ? 'Get Started'
                           : 'Next',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      style: AppStyles.body.copyWith(
                         color: Colors.white,
                       ),
                     ),
@@ -159,11 +164,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               padding: const EdgeInsets.only(bottom: 20),
               child: TextButton(
                 onPressed: _skipOnboarding,
-                child: const Text(
+                child: Text(
                   'Skip',
-                  style: TextStyle(
+                  style: AppStyles.body.copyWith(
                     color: Colors.black,
-                    fontSize: 16,
                   ),
                 ),
               ),
@@ -177,23 +181,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget _buildPage(OnboardingPage page, bool isFirstPage) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.only(
+          top: isFirstPage ? 90.0 : 24.0,
+          left: 24.0,
+          right: 24.0,
+          bottom: 24.0,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isFirstPage) const SizedBox(height: 20),
-            // Title (only for first page at top)
             if (isFirstPage)
               Text(
                 page.title,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+                style: AppStyles.largeTitle,
                 textAlign: TextAlign.center,
               ),
-            if (isFirstPage) const SizedBox(height: 30),
+            if (isFirstPage) const SizedBox(height: 15),
             // Illustration
             _buildIllustration(page, isFirstPage),
             if (!isFirstPage) const SizedBox(height: 40),
@@ -210,14 +213,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             if (!isFirstPage) const SizedBox(height: 16),
             // Subtitle
-            Text(
-              page.subtitle,
-              style: TextStyle(
-                fontSize: isFirstPage ? 18 : 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isFirstPage ? 20.0 : 0.0,
               ),
-              textAlign: TextAlign.center,
+              child: Text(
+                page.subtitle,
+                style: AppStyles.title2,
+                textAlign: TextAlign.center,
+              ),
             ),
             if (page.description.isNotEmpty) ...[
               const SizedBox(height: 12),

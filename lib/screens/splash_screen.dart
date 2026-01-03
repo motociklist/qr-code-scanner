@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/navigation_helper.dart';
+import '../constants/app_styles.dart';
 import 'home_screen.dart';
 import 'onboarding_screen.dart';
 
@@ -100,11 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
                     // "QR Master" - exactly in center
                     const Text(
                       'QR Master',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                      style: AppStyles.largeTitle,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
