@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/navigation_helper.dart';
+import '../constants/app_styles.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -91,9 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _currentPage == 0
-          ? const Color(0xFFE3F2FD) // Light blue background for first page
-          : Colors.grey[100],
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -108,7 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 },
                 itemCount: _pages.length,
                 itemBuilder: (context, index) {
-                  return _buildPage(_pages[index], index == 0);
+                  return _buildPage(_pages[index], index == 0, index);
                 },
               ),
             ),
@@ -120,22 +119,30 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: SizedBox(
                 width: double.infinity,
+                height: 60,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [
-                        Colors.blue[400]!,
-                        Colors.blue[600]!,
+                        Color(0xFF7ACBFF), // 0% - light blue
+                        Color(0xFF4DA6FF), // 100% - darker blue
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4DA6FF).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ElevatedButton(
                     onPressed: _nextPage,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -144,9 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       _currentPage == _pages.length - 1
                           ? 'Get Started'
                           : 'Next',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      style: AppStyles.body.copyWith(
                         color: Colors.white,
                       ),
                     ),
@@ -154,16 +159,16 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
             ),
-            // Skip button at bottom
+            // Skip button at bottom (hidden on last page)r
+
             Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(bottom: 50),
               child: TextButton(
                 onPressed: _skipOnboarding,
-                child: const Text(
+                child: Text(
                   'Skip',
-                  style: TextStyle(
+                  style: AppStyles.body.copyWith(
                     color: Colors.black,
-                    fontSize: 16,
                   ),
                 ),
               ),
@@ -174,61 +179,55 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 
-  Widget _buildPage(OnboardingPage page, bool isFirstPage) {
+  Widget _buildPage(OnboardingPage page, bool isFirstPage, int pageIndex) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.only(
+          top: 90.0,
+          left: 24.0,
+          right: 24.0,
+          bottom: 24.0,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isFirstPage) const SizedBox(height: 20),
-            // Title (only for first page at top)
-            if (isFirstPage)
-              Text(
-                page.title,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            if (isFirstPage) const SizedBox(height: 30),
-            // Illustration
-            _buildIllustration(page, isFirstPage),
-            if (!isFirstPage) const SizedBox(height: 40),
-            // Title (for other pages)
-            if (!isFirstPage)
-              Text(
-                page.title,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            if (!isFirstPage) const SizedBox(height: 16),
-            // Subtitle
+            // Title first for all pages
             Text(
-              page.subtitle,
-              style: TextStyle(
-                fontSize: isFirstPage ? 18 : 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
+              page.title,
+              style: AppStyles.largeTitle,
               textAlign: TextAlign.center,
             ),
-            if (page.description.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              // Description
-              Text(
-                page.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+            // Illustration
+            _buildIllustration(page, isFirstPage),
+            const SizedBox(height: 20),
+            // Subtitle
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 17.0, // 24 (parent) + 17 = 41px from edge
+              ),
+              child: Text(
+                page.subtitle,
+                style: AppStyles.title2,
                 textAlign: TextAlign.center,
+              ),
+            ),
+            if (page.description.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30.0, // 24 (parent) + 21 = 45px from edge
+                ),
+                child: Text(
+                  page.description,
+                  style: AppStyles.body.copyWith(
+                    fontSize: 16,
+                    height: 21 / 16, // line height 21 for font size 16
+                    letterSpacing: -0.5,
+                    color: const Color(0xFF111111),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ],
@@ -262,6 +261,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           fit: BoxFit.contain,
           width: double.infinity,
           height: isFirstPage ? 350 : 300,
+          placeholderBuilder: (context) => const SizedBox(
+            width: double.infinity,
+            height: 350,
+          ),
         ),
       ),
     );
@@ -269,14 +272,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildScanIllustration() {
     return SizedBox(
-      height: 300,
+      height: 320,
       width: double.infinity,
       child: Center(
-        child: SvgPicture.asset(
-          'assets/images/board2.svg',
+        child: Image.asset(
+          'assets/images/onbord2qr.png',
           fit: BoxFit.contain,
           width: double.infinity,
-          height: 300,
+          height: 320,
         ),
       ),
     );
@@ -284,207 +287,135 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildCreateIllustration() {
     return Container(
-      height: 300,
-      padding: const EdgeInsets.all(20),
+      height: 340,
+      padding: const EdgeInsets.only(
+        top: 10,
+        bottom: 0,
+        left: 40,
+        right: 40,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.blue[50]!,
-            Colors.white,
-          ],
-        ),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Input field
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Website URL',
+              style: TextStyle(
+                fontSize: 13.08,
+                fontWeight: FontWeight.w500, // Medium
+                letterSpacing: -0.44,
+                color: Color(0xFF111111),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.link, color: Colors.grey[600], size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'https://example.com',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Input field
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'https://example.com',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SvgPicture.asset(
+                  'assets/images/board3-link.svg',
+                  width: 17,
+                  height: 13,
+                  fit: BoxFit.contain,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xFF9E9E9E),
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // QR code image
+
+          // Generate button
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF7ACBFF), // 0% - light blue
+                    Color(0xFF4DA6FF), // 100% - darker blue
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4DA6FF).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            // Generate button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue[400]!,
-                    Colors.blue[600]!,
-                  ],
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
                 ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'Generate QR Code',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+                child: Text(
+                  'Generate QR Code',
+                  style: AppStyles.body.copyWith(
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            // QR code result
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.qr_code,
-                size: 60,
-                color: Colors.blue,
-              ),
+          ),
+          Center(
+            child: SvgPicture.asset(
+              'assets/images/board3-qr.svg',
+              width: 153,
+              height: 153,
+              fit: BoxFit.contain,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }
 
   Widget _buildManageIllustration() {
     return SizedBox(
-      height: 300,
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.85,
-        ),
-        itemCount: 4,
-        itemBuilder: (context, index) {
-          return _buildQRCard(index);
-        },
-      ),
-    );
-  }
-
-  Widget _buildQRCard(int index) {
-    final titles = ['My Website', 'Contact Info', 'My Website', 'Contact Info'];
-    final subtitles = [
-      'portfolio.com',
-      'John Doe vCard',
-      'portfolio.com',
-      'John Doe vCard'
-    ];
-    final dates = [
-      'Dec 15, 2024',
-      'Dec 12, 2024',
-      'Dec 15, 2024',
-      'Dec 12, 2024'
-    ];
-    final views = [67, 12, 67, 12];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.blue[400],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.qr_code,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const Icon(Icons.more_vert, size: 20, color: Colors.grey),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              titles[index],
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitles[index],
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  dates[index],
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.visibility, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${views[index]}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+      height: 320,
+      width: double.infinity,
+      child: Center(
+        child: Image.asset(
+          'assets/images/board4.png',
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: 320,
         ),
       ),
     );

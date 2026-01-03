@@ -19,7 +19,7 @@ class AppStyles {
 
   // Title 2 - 22px / Semibold (600)
   static const TextStyle title2 = TextStyle(
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: FontWeight.w600,
     color: Colors.black,
   );
@@ -108,4 +108,3 @@ class AppStyles {
     ],
   );
 }
-
