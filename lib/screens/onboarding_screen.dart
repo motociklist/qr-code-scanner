@@ -107,7 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 },
                 itemCount: _pages.length,
                 itemBuilder: (context, index) {
-                  return _buildPage(_pages[index], index == 0);
+                  return _buildPage(_pages[index], index == 0, index);
                 },
               ),
             ),
@@ -161,7 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
             // Skip button at bottom
             Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(bottom: 50),
               child: TextButton(
                 onPressed: _skipOnboarding,
                 child: Text(
@@ -178,11 +178,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 
-  Widget _buildPage(OnboardingPage page, bool isFirstPage) {
+  Widget _buildPage(OnboardingPage page, bool isFirstPage, int pageIndex) {
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
-          top: isFirstPage ? 90.0 : 24.0,
+          top: 90.0,
           left: 24.0,
           right: 24.0,
           bottom: 24.0,
@@ -190,32 +190,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isFirstPage)
-              Text(
-                page.title,
-                style: AppStyles.largeTitle,
-                textAlign: TextAlign.center,
-              ),
-            if (isFirstPage) const SizedBox(height: 15),
+            // Title first for all pages
+            Text(
+              page.title,
+              style: AppStyles.largeTitle,
+              textAlign: TextAlign.center,
+            ),
             // Illustration
             _buildIllustration(page, isFirstPage),
-            if (!isFirstPage) const SizedBox(height: 40),
-            // Title (for other pages)
-            if (!isFirstPage)
-              Text(
-                page.title,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            if (!isFirstPage) const SizedBox(height: 16),
+            const SizedBox(height: 10),
             // Subtitle
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isFirstPage ? 20.0 : 0.0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14.0, // 24 (parent) + 14 = 38px from edge
               ),
               child: Text(
                 page.subtitle,
@@ -224,15 +211,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
             if (page.description.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               // Description
-              Text(
-                page.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30.0, // 24 (parent) + 21 = 45px from edge
                 ),
-                textAlign: TextAlign.center,
+                child: Text(
+                  page.description,
+                  style: AppStyles.body.copyWith(
+                    fontSize: 16,
+                    height: 21 / 16, // line height 21 for font size 16
+                    letterSpacing: -0.5,
+                    color: const Color(0xFF111111),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ],
@@ -273,14 +267,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildScanIllustration() {
     return SizedBox(
-      height: 300,
+      height: 320,
       width: double.infinity,
       child: Center(
-        child: SvgPicture.asset(
-          'assets/images/board2.svg',
+        child: Image.asset(
+          'assets/images/onbord2qr.png',
           fit: BoxFit.contain,
           width: double.infinity,
-          height: 300,
+          height: 320,
         ),
       ),
     );
@@ -288,7 +282,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildCreateIllustration() {
     return Container(
-      height: 300,
+      height: 320,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
