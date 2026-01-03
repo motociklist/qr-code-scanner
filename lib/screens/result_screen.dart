@@ -35,13 +35,28 @@ class _ResultScreenState extends State<ResultScreen> {
     super.initState();
     _parseQRCode();
     _checkIfSaved();
+    loadHistory();
+    // Слушаем изменения истории для синхронизации
+    _historyService.addListener(_onHistoryChanged);
 
+    // History is saved in qr_scanner_screen, so we don't save here to avoid duplicates
     if (!widget.fromHistory) {
-      _saveToHistory();
       AnalyticsService.instance.logQRScan(_qrType.name);
     }
 
     AnalyticsService.instance.logScreenView('result_screen');
+  }
+
+  @override
+  void dispose() {
+    _historyService.removeListener(_onHistoryChanged);
+    super.dispose();
+  }
+
+  void _onHistoryChanged() {
+    if (mounted) {
+      _checkIfSaved();
+    }
   }
 
   void _parseQRCode() {
@@ -65,21 +80,25 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  void _checkIfSaved() {
+  Future<void> _checkIfSaved() async {
+    await loadHistory();
     final savedCodes = _historyService.history.where((item) => item.code == widget.code).toList();
-    setState(() {
-      _isSaved = savedCodes.isNotEmpty;
-    });
+    if (mounted) {
+      setState(() {
+        _isSaved = savedCodes.isNotEmpty;
+      });
+    }
   }
 
-  void _saveToHistory() {
+  Future<void> _saveToHistory() async {
+    await loadHistory();
     final item = ScanHistoryItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       code: widget.code,
       timestamp: DateTime.now(),
       type: _getTypeString(),
     );
-    _historyService.addScan(item);
+    await _historyService.addScan(item);
   }
 
   String _getTypeString() {
@@ -141,6 +160,63 @@ class _ResultScreenState extends State<ResultScreen> {
         );
       }
     }
+  }
+
+  Future<void> _deleteFromHistory() async {
+    await loadHistory();
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete from History'),
+        content: const Text('Are you sure you want to delete this item from history?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Find and remove from history
+      try {
+        final historyItem = _historyService.history.firstWhere(
+          (item) => item.code == widget.code,
+        );
+
+        await _historyService.removeScan(historyItem.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Deleted from history'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Item not found in history'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> loadHistory() async {
+    await _historyService.loadHistory();
   }
 
   Future<void> _openUrl() async {
@@ -491,6 +567,12 @@ class _ResultScreenState extends State<ResultScreen> {
                           onPressed: _saveCode,
                           isActive: _isSaved,
                         ),
+                        if (widget.fromHistory)
+                          _buildActionButton(
+                            icon: Icons.delete_outline,
+                            label: 'Delete',
+                            onPressed: _deleteFromHistory,
+                          ),
                       ],
                     ),
                   ],

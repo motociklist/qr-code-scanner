@@ -8,6 +8,7 @@ import '../components/empty_state.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../utils/qr_type_helper.dart';
+import 'result_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -19,6 +20,33 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final HistoryService _historyService = HistoryService();
   String _selectedFilter = 'All';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+    // Слушаем изменения истории для автоматической синхронизации
+    _historyService.addListener(_onHistoryChanged);
+  }
+
+  @override
+  void dispose() {
+    _historyService.removeListener(_onHistoryChanged);
+    super.dispose();
+  }
+
+  void _onHistoryChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadHistory() async {
+    await _historyService.loadHistory();
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   List<ScanHistoryItem> get _filteredHistory {
     var history = _historyService.history;
@@ -39,6 +67,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     return grouped;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Обновляем историю при появлении экрана
+    _loadHistory();
   }
 
   @override
@@ -72,14 +107,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       color: Colors.black,
                     ),
                   ),
-                  IconButton(
+                  PopupMenuButton<String>(
                     icon: Icon(
-                      Icons.filter_list,
+                      Icons.more_vert,
                       color: Colors.grey[700],
                     ),
-                    onPressed: () {
-
+                    onSelected: (value) {
+                      if (value == 'clear') {
+                        _clearAllHistory();
+                      }
                     },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'clear',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Clear All History', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -150,53 +199,159 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Icon
-          IconCircle(
-            icon: QRTypeHelper.getIcon(item.type, item.action),
-            backgroundColor: QRTypeHelper.getIconColor(item.type, item.action),
-            iconColor: Colors.white,
-          ),
-          const SizedBox(width: 16),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  QRTypeHelper.getTitle(item.type, item.code),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  UrlHelper.truncateText(item.code, maxLength: 30),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${item.action} • ${DateFormatter.formatTime(item.timestamp)}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ],
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResultScreen(code: item.code, fromHistory: true),
             ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Icon
+              IconCircle(
+                icon: QRTypeHelper.getIcon(item.type, item.action),
+                backgroundColor: QRTypeHelper.getIconColor(item.type, item.action),
+                iconColor: Colors.white,
+              ),
+              const SizedBox(width: 16),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      QRTypeHelper.getTitle(item.type, item.code),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      UrlHelper.truncateText(item.code, maxLength: 30),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${item.action} • ${DateFormatter.formatTime(item.timestamp)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action buttons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ActionButtons(content: item.code),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey[200],
+                      ),
+                      child: Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: Colors.red[700],
+                      ),
+                    ),
+                    onPressed: () => _deleteItem(item),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ],
           ),
-          // Action buttons
-          ActionButtons(content: item.code),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteItem(ScanHistoryItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Item'),
+        content: const Text('Are you sure you want to delete this item from history?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      await _historyService.removeScan(item.id);
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item deleted'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearAllHistory() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All History'),
+        content: const Text('Are you sure you want to delete all history? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Clear All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _historyService.clearHistory();
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All history cleared'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }

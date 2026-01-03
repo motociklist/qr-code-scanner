@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/saved_qr_code.dart';
 import '../services/saved_qr_service.dart';
 import '../components/filter_chips.dart';
@@ -65,7 +70,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.visibility),
-              title: const Text('View'),
+              title: const Text('View Details'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -79,11 +84,19 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit'),
+              leading: const Icon(Icons.qr_code_2),
+              title: const Text('View QR Code'),
               onTap: () {
                 Navigator.pop(context);
-
+                _showFullSizeQR(code);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.download),
+              title: const Text('Export Image'),
+              onTap: () {
+                Navigator.pop(context);
+                _exportQRCode(code);
               },
             ),
             ListTile(
@@ -370,5 +383,114 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
         ],
       ),
     );
+  }
+
+  void _showFullSizeQR(SavedQRCode code) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                code.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              QrImageView(
+                data: code.content,
+                version: QrVersions.auto,
+                size: 300,
+                backgroundColor: Colors.white,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _exportQRCode(code);
+                    },
+                    icon: const Icon(Icons.download),
+                    label: const Text('Save'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await Share.share(code.content);
+                    },
+                    icon: const Icon(Icons.share),
+                    label: const Text('Share'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportQRCode(SavedQRCode code) async {
+    try {
+      // Create QR code image using QrPainter
+      final painter = QrPainter(
+        data: code.content,
+        version: QrVersions.auto,
+        errorCorrectionLevel: QrErrorCorrectLevel.L,
+        eyeStyle: const QrEyeStyle(
+          eyeShape: QrEyeShape.square,
+          color: Colors.black,
+        ),
+        dataModuleStyle: const QrDataModuleStyle(
+          dataModuleShape: QrDataModuleShape.square,
+          color: Colors.black,
+        ),
+      );
+
+      final picRecorder = ui.PictureRecorder();
+      final canvas = Canvas(picRecorder);
+      const size = 512.0;
+      // Рисуем белый фон
+      final backgroundPaint = Paint()..color = Colors.white;
+      canvas.drawRect(const Rect.fromLTWH(0, 0, size, size), backgroundPaint);
+      // Рисуем QR код
+      painter.paint(canvas, const Size(size, size));
+      final picture = picRecorder.endRecording();
+      final image = await picture.toImage(size.toInt(), size.toInt());
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData!.buffer.asUint8List();
+
+      // Save to temporary directory and share
+      final directory = await getTemporaryDirectory();
+      final fileName = 'qr_code_${code.id}.png';
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsBytes(pngBytes);
+
+      await Share.shareXFiles([XFile(file.path)], text: code.content);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('QR code ready to share')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting QR code: $e')),
+        );
+      }
+    }
   }
 }

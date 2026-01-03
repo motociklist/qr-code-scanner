@@ -10,6 +10,8 @@ import '../services/apphud_service.dart';
 import '../services/ads_service.dart';
 import '../services/analytics_service.dart';
 import '../services/appsflyer_service.dart';
+import '../services/history_service.dart';
+import '../models/scan_history_item.dart';
 
 // Helper to check if platform is mobile (only works on mobile)
 bool _isMobile() {
@@ -149,11 +151,42 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     }
   }
 
-  void _showResultDialog(String code) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => ResultScreen(code: code)),
+  void _showResultDialog(String code) async {
+    // Save to history
+    final historyService = HistoryService();
+    await historyService.loadHistory();
+    final item = ScanHistoryItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      code: code,
+      timestamp: DateTime.now(),
+      type: _detectQRType(code),
+      action: 'Scanned',
     );
+    await historyService.addScan(item);
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ResultScreen(code: code)),
+      );
+    }
+  }
+
+  String? _detectQRType(String code) {
+    if (code.startsWith('http://') || code.startsWith('https://')) {
+      return 'URL';
+    } else if (code.startsWith('tel:')) {
+      return 'PHONE';
+    } else if (code.startsWith('mailto:')) {
+      return 'EMAIL';
+    } else if (code.startsWith('WIFI:')) {
+      return 'WIFI';
+    } else if (code.startsWith('BEGIN:VCARD')) {
+      return 'CONTACT';
+    } else if (code.startsWith('sms:')) {
+      return 'SMS';
+    }
+    return 'TEXT';
   }
 
   Future<void> _pickImageFromGallery() async {
