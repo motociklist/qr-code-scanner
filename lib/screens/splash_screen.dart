@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -79,13 +80,14 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Decorative background elements
-          _buildBackgroundDecorations(),
-          // Main content
+          // Background image
+          _buildBackgroundImage(screenSize),
+          // All content positioned relative to center "QR Master" text
           Center(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -94,11 +96,10 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 100),
-                    // App Icon
+                    // App Icon above center
                     _buildAppIcon(),
                     const SizedBox(height: 24),
-                    // App Name
+                    // "QR Master" - exactly in center
                     const Text(
                       'QR Master',
                       style: TextStyle(
@@ -106,9 +107,10 @@ class _SplashScreenState extends State<SplashScreen>
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    // Tagline
+                    // Tagline below "QR Master"
                     const Text(
                       'Scan • Create • Manage',
                       style: TextStyle(
@@ -117,8 +119,9 @@ class _SplashScreenState extends State<SplashScreen>
                         color: Color(0xFF666666),
                         letterSpacing: 0.5,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 50),
                     // Loading indicator
                     _buildLoadingIndicator(),
                     const SizedBox(height: 12),
@@ -130,23 +133,19 @@ class _SplashScreenState extends State<SplashScreen>
                         fontWeight: FontWeight.w400,
                         color: Color(0xFF999999),
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+                    // Version info below Loading...
+                    const Text(
+                      'Version 1.0.0',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
-                ),
-              ),
-            ),
-          ),
-          // Version info at bottom
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text(
-                'Version 1.0.0',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[400],
                 ),
               ),
             ),
@@ -156,104 +155,27 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Widget _buildBackgroundDecorations() {
-    return Stack(
-      children: [
-        // Large orange/yellow circle - top right
-        Positioned(
-          top: -50,
-          right: -50,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFFFE5B4).withValues(alpha: 0.3),
-            ),
-          ),
-        ),
-        // Small blue circle with dot - below orange
-        Positioned(
-          top: 120,
-          right: 40,
-          child: Stack(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFB3E5FC).withValues(alpha: 0.3),
-                ),
-              ),
-              Positioned(
-                left: -10,
-                top: 30,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF2196F3),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Small orange dot - mid left
-        Positioned(
-          top: 200,
-          left: 40,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFFF9800),
-            ),
-          ),
-        ),
-        // Small green dot - below orange dot
-        Positioned(
-          top: 240,
-          left: 50,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF4CAF50),
-            ),
-          ),
-        ),
-        // Large blue circle - bottom left
-        Positioned(
-          bottom: -80,
-          left: -80,
-          child: Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFB3E5FC).withValues(alpha: 0.3),
-            ),
-          ),
-        ),
-        // Large green circle - bottom left, slightly right
-        Positioned(
-          bottom: -60,
-          left: 60,
-          child: Container(
-            width: 220,
-            height: 220,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFC8E6C9).withValues(alpha: 0.3),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildBackgroundImage(Size screenSize) {
+    // Используем правильный путь для каждой платформы
+    final imagePath = kIsWeb
+        ? 'images/screen/bg-loading.png' // Для веб без префикса assets/
+        : 'assets/images/screen/bg-loading.png'; // Для мобильных с префиксом
+
+    return Positioned.fill(
+      child: Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Если изображение не загрузилось, показываем белый фон
+          debugPrint('Error loading background image: $error');
+          debugPrint('Image path used: $imagePath');
+          debugPrint('Is Web: $kIsWeb');
+          debugPrint('Stack trace: $stackTrace');
+          return Container(
+            color: Colors.white,
+          );
+        },
+      ),
     );
   }
 
