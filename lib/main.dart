@@ -10,6 +10,7 @@ import 'services/ads_service.dart';
 import 'services/analytics_service.dart';
 import 'services/appsflyer_service.dart';
 import 'services/att_service.dart';
+import 'services/history_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +34,8 @@ void main() async {
       // Continue without Firebase if initialization fails
     }
   } else {
-    debugPrint('Firebase web configuration not set up. Skipping initialization.');
+    debugPrint(
+        'Firebase web configuration not set up. Skipping initialization.');
   }
 
   // Initialize mobile-only services
@@ -83,6 +85,14 @@ void main() async {
     }
   } else {
     debugPrint('Firebase Analytics skipped: web configuration not set up.');
+  }
+
+  // Загрузить историю сканирований при старте приложения
+  try {
+    await HistoryService().loadHistory();
+    debugPrint('History loaded on app start');
+  } catch (e) {
+    debugPrint('Error loading history: $e');
   }
 
   runApp(const QRCodeScannerApp());
