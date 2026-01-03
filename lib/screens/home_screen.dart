@@ -8,6 +8,9 @@ import '../models/scan_history_item.dart';
 import 'result_screen.dart';
 import '../services/apphud_service.dart';
 import 'pricing_screen.dart';
+import '../utils/navigation_helper.dart';
+import '../utils/date_formatter.dart';
+import '../utils/url_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -70,12 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateQRScreen()),
-          );
-        },
+        onPressed: () => NavigationHelper.push(context, const CreateQRScreen()),
         backgroundColor: Colors.green[400],
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -171,20 +169,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     }
   }
 
-  String _getTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-    } else {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-    }
-  }
 
   @override
   void didChangeDependencies() {
@@ -240,14 +224,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: Colors.blue[400]!,
                       title: 'Scan QR',
                       subtitle: 'Quick scan',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const QRScannerScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => NavigationHelper.push(context, const QRScannerScreen()),
                     ),
                     _buildActionCard(
                       context,
@@ -257,19 +234,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       subtitle: 'Generate new',
                       onTap: () {
                         if (!ApphudService.instance.canUseFeature('create_qr')) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PricingScreen(),
-                            ),
-                          );
+                          NavigationHelper.push(context, const PricingScreen());
                         } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CreateQRScreen(),
-                            ),
-                          );
+                          NavigationHelper.push(context, const CreateQRScreen());
                         }
                       },
                     ),
@@ -279,14 +246,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: Colors.orange[400]!,
                       title: 'My QR Codes',
                       subtitle: 'Saved codes',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MyQRCodesScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => NavigationHelper.push(context, const MyQRCodesScreen()),
                     ),
                     _buildActionCard(
                       context,
@@ -294,14 +254,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: Colors.grey[600]!,
                       title: 'History',
                       subtitle: 'Recent scans',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HistoryScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => NavigationHelper.push(context, const HistoryScreen()),
                     ),
                   ],
                 ),
@@ -420,10 +373,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   }
 
   Widget _buildRecentActivityItem(BuildContext context, ScanHistoryItem item) {
-    final isUrl = item.code.startsWith('http://') || item.code.startsWith('https://');
-    final displayText = item.code.length > 30
-        ? '${item.code.substring(0, 30)}...'
-        : item.code;
+    final isUrl = UrlHelper.isUrl(item.code);
+    final displayText = UrlHelper.truncateText(item.code, maxLength: 30);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -441,17 +392,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ResultScreen(
-                  code: item.code,
-                  fromHistory: true,
-                ),
-              ),
-            );
-          },
+          onTap: () => NavigationHelper.push(
+            context,
+            ResultScreen(code: item.code, fromHistory: true),
+          ),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -485,7 +429,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _getTimeAgo(item.timestamp),
+                        DateFormatter.getTimeAgo(item.timestamp),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

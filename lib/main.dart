@@ -1,100 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
-import 'services/apphud_service.dart';
-import 'services/ads_service.dart';
-import 'services/analytics_service.dart';
-import 'services/appsflyer_service.dart';
-import 'services/att_service.dart';
-import 'services/history_service.dart';
+import 'services/app_initializer.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Set preferred orientations (not for web)
-  if (!kIsWeb) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  }
-
-  // Initialize Firebase (skip on web if not configured)
-  if (!kIsWeb || DefaultFirebaseOptions.isConfigured) {
-    try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    } catch (e) {
-      debugPrint('Error initializing Firebase: $e');
-      // Continue without Firebase if initialization fails
-    }
-  } else {
-    debugPrint(
-        'Firebase web configuration not set up. Skipping initialization.');
-  }
-
-  // Initialize mobile-only services
-  if (!kIsWeb) {
-    // Request ATT permission (iOS only)
-    try {
-      final attStatus = await ATTService.instance.requestPermission();
-      debugPrint('ATT Status: $attStatus');
-    } catch (e) {
-      debugPrint('Error requesting ATT: $e');
-    }
-
-    // Initialize mobile services
-    try {
-      await ApphudService.instance.initialize();
-    } catch (e) {
-      debugPrint('Error initializing Apphud: $e');
-    }
-
-    try {
-      await AppsFlyerService.instance.initialize();
-    } catch (e) {
-      debugPrint('Error initializing AppsFlyer: $e');
-    }
-
-    try {
-      await AdsService.instance.initialize();
-    } catch (e) {
-      debugPrint('Error initializing Google Mobile Ads: $e');
-    }
-
-    // Update ATT status in AppsFlyer
-    try {
-      final attStatus = await ATTService.instance.getStatus();
-      await AppsFlyerService.instance.updateATTStatus(attStatus);
-    } catch (e) {
-      debugPrint('Error updating ATT status: $e');
-    }
-  }
-
-  // Initialize Analytics (works on web too, but skip if Firebase not configured)
-  if (!kIsWeb || DefaultFirebaseOptions.isConfigured) {
-    try {
-      await AnalyticsService.instance.initialize();
-    } catch (e) {
-      debugPrint('Error initializing Firebase Analytics: $e');
-    }
-  } else {
-    debugPrint('Firebase Analytics skipped: web configuration not set up.');
-  }
-
-  // Загрузить историю сканирований при старте приложения
-  try {
-    await HistoryService().loadHistory();
-    debugPrint('History loaded on app start');
-  } catch (e) {
-    debugPrint('Error loading history: $e');
-  }
-
+  await AppInitializer.initialize();
   runApp(const QRCodeScannerApp());
 }
 

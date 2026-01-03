@@ -12,6 +12,7 @@ import '../services/analytics_service.dart';
 import '../services/appsflyer_service.dart';
 import '../services/history_service.dart';
 import '../models/scan_history_item.dart';
+import '../utils/navigation_helper.dart';
 
 // Helper to check if platform is mobile (only works on mobile)
 bool _isMobile() {
@@ -165,10 +166,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     await historyService.addScan(item);
 
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ResultScreen(code: code)),
-      );
+      NavigationHelper.push(context, ResultScreen(code: code), replace: true);
     }
   }
 

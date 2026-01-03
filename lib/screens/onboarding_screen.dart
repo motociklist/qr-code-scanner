@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/navigation_helper.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -83,10 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     await prefs.setBool('onboarding_completed', true);
 
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      NavigationHelper.push(context, const HomeScreen(), replace: true);
     }
   }
 
