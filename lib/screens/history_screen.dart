@@ -78,7 +78,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       color: Colors.grey[700],
                     ),
                     onPressed: () {
-                      // TODO: Implement filter/sort dialog
+
                     },
                   ),
                 ],

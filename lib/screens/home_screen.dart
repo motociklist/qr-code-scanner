@@ -6,6 +6,8 @@ import 'create_qr_screen.dart';
 import '../services/history_service.dart';
 import '../models/scan_history_item.dart';
 import 'result_screen.dart';
+import '../services/apphud_service.dart';
+import 'pricing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -220,12 +222,21 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       title: 'Create QR',
                       subtitle: 'Generate new',
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CreateQRScreen(),
-                          ),
-                        );
+                        if (!ApphudService.instance.canUseFeature('create_qr')) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PricingScreen(),
+                            ),
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CreateQRScreen(),
+                            ),
+                          );
+                        }
                       },
                     ),
                     _buildActionCard(

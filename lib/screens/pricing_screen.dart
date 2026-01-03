@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/feature_card.dart';
+import '../services/apphud_service.dart';
+import '../services/analytics_service.dart';
+import '../services/appsflyer_service.dart';
 
 enum BadgePosition { top, right }
 
@@ -69,8 +72,25 @@ class _PricingScreenState extends State<PricingScreen> {
                           onPressed: () => Navigator.pop(context),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // TODO: Implement restore purchases
+                          onPressed: () async {
+                            final subscriptionService = ApphudService.instance;
+                            final currentContext = context;
+                            final restored =
+                                await subscriptionService.restorePurchases();
+                            AppsFlyerService.instance
+                                .logEvent('restore_purchases');
+                            if (mounted && currentContext.mounted) {
+                              ScaffoldMessenger.of(currentContext).showSnackBar(
+                                SnackBar(
+                                  content: Text(restored
+                                      ? 'Purchases restored successfully'
+                                      : 'No purchases found to restore'),
+                                ),
+                              );
+                              if (restored && currentContext.mounted) {
+                                Navigator.pop(currentContext);
+                              }
+                            }
                           },
                           child: const Text(
                             'Restore',
@@ -194,9 +214,133 @@ class _PricingScreenState extends State<PricingScreen> {
                       child: ElevatedButton(
                         onPressed: _selectedPlan == null
                             ? null
-                            : () {
-                                // TODO: Implement purchase
-                                Navigator.pop(context);
+                            : () async {
+                                if (_selectedPlan == null) return;
+
+                                final analyticsService =
+                                    AnalyticsService.instance;
+
+                                // Show loading
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+
+                                try {
+                                  // Find the selected product
+                                  final selectedProduct = ApphudService.instance
+                                      .getProduct(_selectedPlan!);
+
+                                  AppsFlyerService.instance.logEvent(
+                                      'purchase_initiated',
+                                      eventValues: {
+                                        'product_id': _selectedPlan!,
+                                      });
+
+                                  if (selectedProduct != null) {
+                                    final productId =
+                                        selectedProduct['productId']
+                                                as String? ??
+                                            _selectedPlan!;
+                                    final currentContext = context;
+                                    final success = await ApphudService.instance
+                                        .purchaseSubscription(
+                                      productId,
+                                    );
+
+                                    if (!mounted || !currentContext.mounted) {
+                                      return;
+                                    }
+                                    Navigator.pop(
+                                        currentContext); // Close loading
+
+                                    if (success) {
+                                      // Get price from product
+                                      final skProduct =
+                                          selectedProduct['skProduct']
+                                              as Map<String, dynamic>?;
+                                      final price =
+                                          (skProduct?['price'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0;
+                                      final priceLocale =
+                                          skProduct?['priceLocale']
+                                              as Map<String, dynamic>?;
+                                      final currencyCode =
+                                          priceLocale?['currencyCode']
+                                                  as String? ??
+                                              'USD';
+
+                                      await analyticsService
+                                          .logSubscriptionPurchase(
+                                        _selectedPlan!,
+                                        price,
+                                      );
+
+                                      AppsFlyerService.instance.logEvent(
+                                          'purchase_completed',
+                                          eventValues: {
+                                            'product_id': _selectedPlan!,
+                                            'price': price,
+                                            'currency': currencyCode,
+                                          });
+
+                                      if (!mounted || !currentContext.mounted) {
+                                        return;
+                                      }
+                                      Navigator.pop(
+                                          currentContext); // Close pricing screen
+                                      ScaffoldMessenger.of(currentContext)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Subscription activated successfully!'),
+                                        ),
+                                      );
+                                    } else {
+                                      if (!mounted || !currentContext.mounted) {
+                                        return;
+                                      }
+                                      ScaffoldMessenger.of(currentContext)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Purchase failed. Please try again.'),
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    final currentContext = context;
+                                    if (!mounted || !currentContext.mounted) {
+                                      return;
+                                    }
+                                    Navigator.pop(
+                                        currentContext); // Close loading
+                                    ScaffoldMessenger.of(currentContext)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Product not found. Please try again later.'),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  final currentContext = context;
+                                  if (!mounted || !currentContext.mounted) {
+                                    return;
+                                  }
+                                  Navigator.pop(
+                                      currentContext); // Close loading
+                                  ScaffoldMessenger.of(currentContext)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: $e'),
+                                    ),
+                                  );
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue[400],
@@ -232,9 +376,7 @@ class _PricingScreenState extends State<PricingScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         TextButton(
-                          onPressed: () {
-                            // TODO: Open Terms of Service
-                          },
+                          onPressed: () {},
                           child: Text(
                             'Terms of Service',
                             style: TextStyle(
@@ -251,9 +393,7 @@ class _PricingScreenState extends State<PricingScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // TODO: Open Privacy Policy
-                          },
+                          onPressed: () {},
                           child: Text(
                             'Privacy Policy',
                             style: TextStyle(
@@ -318,7 +458,8 @@ class _PricingScreenState extends State<PricingScreen> {
               children: [
                 if (badge != null && badgePosition == BadgePosition.top) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: badgeColor ?? Colors.blue[100],
                       borderRadius: BorderRadius.circular(20),
@@ -398,7 +539,8 @@ class _PricingScreenState extends State<PricingScreen> {
                     ),
                     if (badge != null && badgePosition == BadgePosition.right)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: badgeColor ?? Colors.green[100],
                           borderRadius: BorderRadius.circular(20),
@@ -444,4 +586,3 @@ class _PricingScreenState extends State<PricingScreen> {
     );
   }
 }
-

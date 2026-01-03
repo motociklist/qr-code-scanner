@@ -1,13 +1,14 @@
 buildscript {
-    ext.kotlin_version = '1.9.22'
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath 'com.android.tools.build:gradle:8.7.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.4.2'
     }
 }
 
@@ -18,15 +19,36 @@ allprojects {
     }
 }
 
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            def android = project.android
+            if (android.namespace == null) {
+                // Try to get namespace from AndroidManifest.xml
+                def manifestFile = project.file("src/main/AndroidManifest.xml")
+                if (manifestFile.exists()) {
+                    def manifestContent = manifestFile.text
+                    def packageMatch = manifestContent =~ /package=["']([^"']+)["']/
+                    if (packageMatch.find()) {
+                        android.namespace = packageMatch.group(1)
+                    } else {
+                        // Default namespace based on plugin name
+                        android.namespace = "flutter.plugins.${project.name.replace('-', '')}"
+                    }
+                } else {
+                    // Default namespace for plugins
+                    android.namespace = "flutter.plugins.${project.name.replace('-', '')}"
+                }
+            }
+        }
+    }
+}
+
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
 }
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-
