@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'qr_scanner_screen.dart';
 import 'history_screen.dart';
 import 'my_qr_codes_screen.dart';
@@ -11,6 +12,7 @@ import 'pricing_screen.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
+import '../constants/app_styles.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,55 +38,78 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      bottomNavigationBar: ClipPath(
+        clipper: _BottomNavBarClipper(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Container(
-            height: 70,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Stack(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(Icons.home_outlined, 'Home', 0),
-                    _buildNavItem(Icons.qr_code_scanner, 'Scan QR', 1),
-                    const SizedBox(width: 60), // Space for FAB
-                    _buildNavItem(Icons.folder_outlined, 'My QR Codes', 2),
-                    _buildNavItem(Icons.history_outlined, 'History', 3),
-                  ],
-                ),
-              ],
+          child: SafeArea(
+            child: Container(
+              height: 90,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem('assets/images/nav_menu/home.svg', 'Home', 0),
+                  _buildNavItem(
+                      'assets/images/nav_menu/scan.svg', 'Scan QR', 1),
+                  const SizedBox(width: 60), // Space for FAB
+                  _buildNavItem('assets/images/nav_menu/my_qr_code.svg',
+                      'My QR Codes', 2),
+                  _buildNavItem(
+                      'assets/images/nav_menu/history.svg', 'History', 3),
+                ],
+              ),
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => NavigationHelper.push(context, const CreateQRScreen()),
-        backgroundColor: Colors.green[400],
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.green[400],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => NavigationHelper.push(context, const CreateQRScreen()),
+            borderRadius: BorderRadius.circular(28),
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(String iconPath, String label, int index) {
     final isSelected = _currentIndex == index;
+    final activeColor = const Color(0xFF7ACBFF); // Light blue from gradient
+    final inactiveColor = const Color(0xFFB0B0B0); // Grey color
+
+    // Выбираем активную или неактивную версию иконки
+    final String activeIconPath = iconPath.replaceAll('.svg', '-activ.svg');
+    final String finalIconPath = isSelected ? activeIconPath : iconPath;
+
     return Expanded(
-      child: InkWell(
+      child: GestureDetector(
         onTap: () {
           setState(() {
             _currentIndex = index;
@@ -94,35 +119,26 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Stack(
+              alignment: Alignment.center,
               children: [
-                Icon(
-                  icon,
-                  color: isSelected ? Colors.blue[400] : Colors.grey,
-                  size: 24,
-                ),
-                if (index == 0)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.red,
-                        border: Border.all(color: Colors.white, width: 1),
-                      ),
-                    ),
+                SvgPicture.asset(
+                  finalIconPath,
+                  width: 24,
+                  height: 24,
+                  placeholderBuilder: (context) => Container(
+                    width: 24,
+                    height: 24,
+                    color: Colors.transparent,
                   ),
+                  semanticsLabel: label,
+                ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isSelected ? Colors.blue[400] : Colors.grey,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              style: AppStyles.tabBarLabel.copyWith(
+                color: isSelected ? activeColor : inactiveColor,
               ),
             ),
           ],
@@ -168,7 +184,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       setState(() {});
     }
   }
-
 
   @override
   void didChangeDependencies() {
@@ -224,7 +239,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: Colors.blue[400]!,
                       title: 'Scan QR',
                       subtitle: 'Quick scan',
-                      onTap: () => NavigationHelper.push(context, const QRScannerScreen()),
+                      onTap: () => NavigationHelper.push(
+                          context, const QRScannerScreen()),
                     ),
                     _buildActionCard(
                       context,
@@ -233,10 +249,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       title: 'Create QR',
                       subtitle: 'Generate new',
                       onTap: () {
-                        if (!ApphudService.instance.canUseFeature('create_qr')) {
+                        if (!ApphudService.instance
+                            .canUseFeature('create_qr')) {
                           NavigationHelper.push(context, const PricingScreen());
                         } else {
-                          NavigationHelper.push(context, const CreateQRScreen());
+                          NavigationHelper.push(
+                              context, const CreateQRScreen());
                         }
                       },
                     ),
@@ -246,7 +264,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: Colors.orange[400]!,
                       title: 'My QR Codes',
                       subtitle: 'Saved codes',
-                      onTap: () => NavigationHelper.push(context, const MyQRCodesScreen()),
+                      onTap: () => NavigationHelper.push(
+                          context, const MyQRCodesScreen()),
                     ),
                     _buildActionCard(
                       context,
@@ -254,7 +273,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: Colors.grey[600]!,
                       title: 'History',
                       subtitle: 'Recent scans',
-                      onTap: () => NavigationHelper.push(context, const HistoryScreen()),
+                      onTap: () =>
+                          NavigationHelper.push(context, const HistoryScreen()),
                     ),
                   ],
                 ),
@@ -287,7 +307,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     ),
                   )
                 else
-                  ...recentHistory.map((item) => _buildRecentActivityItem(context, item)),
+                  ...recentHistory
+                      .map((item) => _buildRecentActivityItem(context, item)),
                 const SizedBox(height: 20),
               ],
             ),
@@ -452,3 +473,64 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   }
 }
 
+// Custom clipper для создания выемки в навигационной панели
+class _BottomNavBarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final notchWidth = 80.0; // Длина выемки
+    final notchDepth = 25.0; // Глубина выемки
+    final centerX = size.width / 2;
+
+    // Начинаем с левого верхнего угла
+    path.moveTo(0, 0);
+
+    // Верхняя линия до начала выемки слева
+    final transitionWidth = 15.0; // Ширина переходной зоны
+    path.lineTo(centerX - notchWidth / 2 - transitionWidth, 0);
+
+    // Левая часть выемки (симметричная плавная кривая вниз)
+    path.cubicTo(
+      centerX - notchWidth / 2 - transitionWidth * 0.5,
+      0,
+      centerX - notchWidth / 2 - transitionWidth * 0.2,
+      notchDepth * 1,
+      centerX - notchWidth / 2,
+      notchDepth,
+    );
+
+    // Нижняя часть выемки (симметричный полукруг до максимальной глубины)
+    path.arcToPoint(
+      Offset(centerX + notchWidth / 2, notchDepth),
+      radius: Radius.elliptical(notchWidth / 2, notchDepth),
+      clockwise: false,
+    );
+
+    // Правая часть выемки (симметричная плавная кривая вверх)
+    path.cubicTo(
+      centerX + notchWidth / 2 + transitionWidth * 0.2,
+      notchDepth * 1,
+      centerX + notchWidth / 2 + transitionWidth * 0.5,
+      0,
+      centerX + notchWidth / 2 + transitionWidth,
+      0,
+    );
+
+    // Верхняя линия до правого края
+    path.lineTo(size.width, 0);
+
+    // Правый край
+    path.lineTo(size.width, size.height);
+
+    // Нижняя линия
+    path.lineTo(0, size.height);
+
+    // Закрываем путь
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
