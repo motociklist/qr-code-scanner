@@ -58,4 +58,12 @@ flutter:
   assets:
     - assets/images/
     - assets/images/screen/bg-loading.png
+    - assets/images/nav_menu/home.svg
+    - assets/images/nav_menu/scan.svg
+    - assets/images/nav_menu/my_qr_code.svg
+    - assets/images/nav_menu/history.svg
+    - assets/images/nav_menu/home-activ.svg
+    - assets/images/nav_menu/scan-activ.svg
+    - assets/images/nav_menu/my_qr_code-activ.svg
+    - assets/images/nav_menu/history-activ.svg
 
