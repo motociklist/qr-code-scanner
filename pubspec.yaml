@@ -58,6 +58,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/screen/bg-loading.png
+    - assets/images/nav_menu/plus.svg
     - assets/images/nav_menu/home.svg
     - assets/images/nav_menu/scan.svg
     - assets/images/nav_menu/my_qr_code.svg
@@ -66,4 +67,7 @@ flutter:
     - assets/images/nav_menu/scan-activ.svg
     - assets/images/nav_menu/my_qr_code-activ.svg
     - assets/images/nav_menu/history-activ.svg
+    - assets/images/home-page/link.svg
+    - assets/images/home-page/plus.svg
+    - assets/images/home-page/shared.svg
 

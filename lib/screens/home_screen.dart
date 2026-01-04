@@ -13,6 +13,7 @@ import '../utils/navigation_helper.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../constants/app_styles.dart';
+import '../constants/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -206,6 +207,16 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
+                // Header section
+                Text(
+                  'Главный экран',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 // Welcome section
                 const Text(
                   'Welcome, Name!',
@@ -235,8 +246,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   children: [
                     _buildActionCard(
                       context,
-                      icon: Icons.qr_code_scanner,
-                      iconColor: Colors.blue[400]!,
+                      iconPath: 'assets/images/nav_menu/scan-activ.svg',
+                      iconColor: const Color(0xFF7ACBFF), // Bright blue
                       title: 'Scan QR',
                       subtitle: 'Quick scan',
                       onTap: () => NavigationHelper.push(
@@ -244,8 +255,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     ),
                     _buildActionCard(
                       context,
-                      icon: Icons.add_circle,
-                      iconColor: Colors.green[400]!,
+                      iconPath: 'assets/images/nav_menu/plus.svg',
+                      iconColor: const Color(0xFF77C97E), // Bright green
                       title: 'Create QR',
                       subtitle: 'Generate new',
                       onTap: () {
@@ -260,8 +271,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     ),
                     _buildActionCard(
                       context,
-                      icon: Icons.folder,
-                      iconColor: Colors.orange[400]!,
+                      iconPath: 'assets/images/nav_menu/my_qr_code-activ.svg',
+                      iconColor: const Color(0xFFFFB86C), // Bright orange
                       title: 'My QR Codes',
                       subtitle: 'Saved codes',
                       onTap: () => NavigationHelper.push(
@@ -269,8 +280,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     ),
                     _buildActionCard(
                       context,
-                      icon: Icons.history,
-                      iconColor: Colors.grey[600]!,
+                      iconPath: 'assets/images/nav_menu/history-activ.svg',
+                      iconColor: const Color(0xFFB0B0B0), // Grey
                       title: 'History',
                       subtitle: 'Recent scans',
                       onTap: () =>
@@ -320,7 +331,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   Widget _buildActionCard(
     BuildContext context, {
-    required IconData icon,
+    required String iconPath,
     required Color iconColor,
     required String title,
     required String subtitle,
@@ -350,16 +361,27 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: iconColor.withValues(alpha: 0.1),
-                  ),
-                  child: Icon(
-                    icon,
                     color: iconColor,
-                    size: 26,
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      iconPath,
+                      width: 25,
+                      height: 25,
+                      colorFilter: ColorFilter.mode(
+                        AppTheme.colors.strokeColor,
+                        BlendMode.srcIn,
+                      ),
+                      placeholderBuilder: (context) => Container(
+                        width: 25,
+                        height: 25,
+                        color: Colors.transparent,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -371,7 +393,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
@@ -395,7 +417,32 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   Widget _buildRecentActivityItem(BuildContext context, ScanHistoryItem item) {
     final isUrl = UrlHelper.isUrl(item.code);
-    final displayText = UrlHelper.truncateText(item.code, maxLength: 30);
+    final isCreated = item.action == 'Created';
+    final isWifi = item.type == 'WIFI';
+    final isContact = item.type == 'CONTACT';
+
+    // Определяем иконку и цвет в зависимости от типа активности
+    String iconPath;
+    Color iconColor;
+    String activityText;
+
+    if (isCreated && isWifi) {
+      iconPath = 'assets/images/home-page/plus.svg';
+      iconColor = const Color(0xFF77C97E); // Bright green
+      activityText = 'Created WiFi QR';
+    } else if (isCreated && isContact) {
+      iconPath = 'assets/images/home-page/shared.svg';
+      iconColor = const Color(0xFFFFB86C); // Bright orange
+      activityText = 'Shared contact QR';
+    } else if (isUrl) {
+      iconPath = 'assets/images/home-page/link.svg';
+      iconColor = const Color(0xFF7ACBFF); // Bright blue
+      activityText = 'Scanned website link';
+    } else {
+      iconPath = 'assets/images/home-page/link.svg';
+      iconColor = const Color(0xFF7ACBFF); // Bright blue
+      activityText = 'Scanned QR code';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -423,16 +470,27 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.blue[50],
+                    color: iconColor,
                   ),
-                  child: Icon(
-                    isUrl ? Icons.link : Icons.qr_code,
-                    color: Colors.blue[400],
-                    size: 24,
+                  child: Center(
+                    child: SvgPicture.asset(
+                      iconPath,
+                      width: 12,
+                      height: 12,
+                      colorFilter: ColorFilter.mode(
+                        AppTheme.colors.strokeColor,
+                        BlendMode.srcIn,
+                      ),
+                      placeholderBuilder: (context) => Container(
+                        width: 12,
+                        height: 12,
+                        color: Colors.transparent,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -441,7 +499,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isUrl ? 'Scanned website link' : displayText,
+                        activityText,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
