@@ -4,20 +4,24 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/scan_history_item.dart';
 import '../services/history_service.dart';
 import '../services/analytics_service.dart';
 import '../services/ads_service.dart';
 import '../utils/qr_parser.dart';
+import '../utils/date_formatter.dart';
 
 class ResultScreen extends StatefulWidget {
   final String code;
   final bool fromHistory;
+  final String? historyId; // ID записи в истории, если открыто из истории
 
   const ResultScreen({
     super.key,
     required this.code,
     this.fromHistory = false,
+    this.historyId,
   });
 
   @override
@@ -29,17 +33,19 @@ class _ResultScreenState extends State<ResultScreen> {
   QRType _qrType = QRType.text;
   Map<String, String> _parsedData = {};
   bool _isSaved = false;
+  String? _savedHistoryId; // ID сохраненной записи в истории
 
   @override
   void initState() {
     super.initState();
     _parseQRCode();
-    _checkIfSaved();
     loadHistory();
     // Слушаем изменения истории для синхронизации
     _historyService.addListener(_onHistoryChanged);
 
-    // History is saved in qr_scanner_screen, so we don't save here to avoid duplicates
+    // Проверяем сохраненность при инициализации
+    _checkIfSaved();
+
     if (!widget.fromHistory) {
       AnalyticsService.instance.logQRScan(_qrType.name);
     }
@@ -54,9 +60,8 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   void _onHistoryChanged() {
-    if (mounted) {
-      _checkIfSaved();
-    }
+    // Не обновляем состояние сохраненности автоматически
+    // Пользователь сам управляет через кнопку Save
   }
 
   void _parseQRCode() {
@@ -82,23 +87,64 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _checkIfSaved() async {
     await loadHistory();
-    final savedCodes = _historyService.history.where((item) => item.code == widget.code).toList();
+    if (!mounted) return;
+
+    // Если открыто из истории и передан historyId, используем его
+    if (widget.fromHistory && widget.historyId != null) {
+      final item = _historyService.getScanById(widget.historyId!);
+      if (item != null && item.code == widget.code) {
+        setState(() {
+          _isSaved = true;
+          _savedHistoryId = item.id;
+        });
+        return;
+      }
+    }
+
+    // Иначе ищем по коду (берем первую найденную запись)
+    ScanHistoryItem? savedItem;
+    try {
+      savedItem = _historyService.history
+          .where((item) => item.code == widget.code)
+          .first;
+    } catch (e) {
+      savedItem = null;
+    }
+
     if (mounted) {
       setState(() {
-        _isSaved = savedCodes.isNotEmpty;
+        _isSaved = savedItem != null;
+        _savedHistoryId = savedItem?.id;
       });
     }
   }
 
-  Future<void> _saveToHistory() async {
+  Future<void> _removeFromHistory() async {
+    await loadHistory();
+    if (!mounted) return;
+
+    // Удаляем только одну конкретную запись по ID
+    if (_savedHistoryId != null) {
+      try {
+        await _historyService.removeScan(_savedHistoryId!);
+      } catch (e) {
+        // Error removing from history
+      }
+    }
+  }
+
+  Future<void> _saveToHistory({String action = 'Scanned'}) async {
     await loadHistory();
     final item = ScanHistoryItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       code: widget.code,
       timestamp: DateTime.now(),
       type: _getTypeString(),
+      action: action,
     );
     await _historyService.addScan(item);
+    // Сохраняем ID созданной записи
+    _savedHistoryId = item.id;
   }
 
   String _getTypeString() {
@@ -134,11 +180,23 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _shareContent() async {
     await Share.share(widget.code);
+
+    // Всегда создаем новую запись с action 'Shared', даже если код уже сохранен
+    await _saveToHistory(action: 'Shared');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Saved to history'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
-  void _saveCode() {
+  Future<void> _saveCode() async {
     if (!_isSaved) {
-      _saveToHistory();
+      // Сохраняем в историю
+      await _saveToHistory();
       setState(() {
         _isSaved = true;
       });
@@ -151,66 +209,19 @@ class _ResultScreenState extends State<ResultScreen> {
         );
       }
     } else {
+      // Удаляем из истории только эту конкретную запись
+      await _removeFromHistory();
+      setState(() {
+        _isSaved = false;
+        _savedHistoryId = null; // Очищаем ID после удаления
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Already saved'),
+            content: Text('Removed from history'),
             duration: Duration(seconds: 2),
           ),
         );
-      }
-    }
-  }
-
-  Future<void> _deleteFromHistory() async {
-    await loadHistory();
-    if (!mounted) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete from History'),
-        content: const Text('Are you sure you want to delete this item from history?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      // Find and remove from history
-      try {
-        final historyItem = _historyService.history.firstWhere(
-          (item) => item.code == widget.code,
-        );
-
-        await _historyService.removeScan(historyItem.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Deleted from history'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-          Navigator.pop(context);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Item not found in history'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
       }
     }
   }
@@ -255,7 +266,9 @@ class _ResultScreenState extends State<ResultScreen> {
         mailto += 'subject=${Uri.encodeComponent(subject)}';
       }
       if (body.isNotEmpty) {
-        mailto += subject.isNotEmpty ? '&body=${Uri.encodeComponent(body)}' : 'body=${Uri.encodeComponent(body)}';
+        mailto += subject.isNotEmpty
+            ? '&body=${Uri.encodeComponent(body)}'
+            : 'body=${Uri.encodeComponent(body)}';
       }
     }
 
@@ -285,7 +298,9 @@ class _ResultScreenState extends State<ResultScreen> {
       );
 
       if (_parsedData['phone'] != null) {
-        contact.phones = [Phone(_parsedData['phone']!, label: PhoneLabel.mobile)];
+        contact.phones = [
+          Phone(_parsedData['phone']!, label: PhoneLabel.mobile)
+        ];
       }
 
       if (_parsedData['email'] != null) {
@@ -293,7 +308,9 @@ class _ResultScreenState extends State<ResultScreen> {
       }
 
       if (_parsedData['organization'] != null) {
-        contact.organizations = [Organization(company: _parsedData['organization']!)];
+        contact.organizations = [
+          Organization(company: _parsedData['organization']!)
+        ];
       }
 
       await FlutterContacts.insertContact(contact);
@@ -324,7 +341,8 @@ class _ResultScreenState extends State<ResultScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('WiFi: ${_parsedData['S'] ?? 'Unknown'}\nPassword: ${_parsedData['P'] ?? 'None'}'),
+          content: Text(
+              'WiFi: ${_parsedData['S'] ?? 'Unknown'}\nPassword: ${_parsedData['P'] ?? 'None'}'),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -345,63 +363,6 @@ class _ResultScreenState extends State<ResultScreen> {
         return '${url.substring(0, 27)}...';
       }
       return url;
-    }
-  }
-
-  IconData _getTypeIcon() {
-    switch (_qrType) {
-      case QRType.url:
-        return Icons.link;
-      case QRType.phone:
-        return Icons.phone;
-      case QRType.email:
-        return Icons.email;
-      case QRType.contact:
-        return Icons.contact_page;
-      case QRType.wifi:
-        return Icons.wifi;
-      case QRType.sms:
-        return Icons.sms;
-      default:
-        return Icons.text_fields;
-    }
-  }
-
-  Color _getTypeColor() {
-    switch (_qrType) {
-      case QRType.url:
-        return Colors.blue;
-      case QRType.phone:
-        return Colors.green;
-      case QRType.email:
-        return Colors.orange;
-      case QRType.contact:
-        return Colors.purple;
-      case QRType.wifi:
-        return Colors.cyan;
-      case QRType.sms:
-        return Colors.teal;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getTypeTitle() {
-    switch (_qrType) {
-      case QRType.url:
-        return 'Website URL';
-      case QRType.phone:
-        return 'Phone Number';
-      case QRType.email:
-        return 'Email Address';
-      case QRType.contact:
-        return 'Contact Information';
-      case QRType.wifi:
-        return 'WiFi Network';
-      case QRType.sms:
-        return 'SMS Message';
-      default:
-        return 'Text Content';
     }
   }
 
@@ -428,7 +389,17 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.black),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      // Если открыто не из истории, возвращаемся на главную страницу
+                      if (!widget.fromHistory) {
+                        // Закрываем все экраны до главного (HomeScreen)
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
+                      } else {
+                        // Если открыто из истории, просто закрываем
+                        Navigator.pop(context);
+                      }
+                    },
                   ),
                 ],
               ),
@@ -439,25 +410,26 @@ class _ResultScreenState extends State<ResultScreen> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Success indicator
+                    // Success indicator - большая зеленая иконка с галочкой
                     Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
+                      width: 120,
+                      height: 120,
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _getTypeColor(),
+                        color: Color(0xFF77C97E), // Светло-зеленый цвет
                       ),
-                      child: Icon(
-                        _getTypeIcon(),
+                      child: const Icon(
+                        Icons.check,
                         color: Colors.white,
-                        size: 50,
+                        size: 60,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text(
-                      _getTypeTitle(),
-                      style: const TextStyle(
-                        fontSize: 22,
+                    // "Scan Successful"
+                    const Text(
+                      'Scan Successful',
+                      style: TextStyle(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
@@ -507,9 +479,9 @@ class _ResultScreenState extends State<ResultScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
-                                    'Just now',
-                                    style: TextStyle(
+                                  Text(
+                                    DateFormatter.getTimeAgo(DateTime.now()),
+                                    style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black,
@@ -544,35 +516,29 @@ class _ResultScreenState extends State<ResultScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // Action buttons based on type
+                    // Action buttons based on type - кнопка Open Link с градиентом
                     _buildActionButtons(),
                     const SizedBox(height: 20),
-                    // Bottom action buttons
+                    // Bottom action buttons - три кнопки внизу
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildActionButton(
-                          icon: Icons.copy,
+                          iconPath: 'assets/images/scan_result-page/copy.svg',
                           label: 'Copy',
                           onPressed: _copyToClipboard,
                         ),
                         _buildActionButton(
-                          icon: Icons.share,
+                          iconPath: 'assets/images/home-page/shared.svg',
                           label: 'Share',
                           onPressed: _shareContent,
                         ),
                         _buildActionButton(
-                          icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                          iconPath: 'assets/images/scan_result-page/save.svg',
                           label: 'Save',
                           onPressed: _saveCode,
                           isActive: _isSaved,
                         ),
-                        if (widget.fromHistory)
-                          _buildActionButton(
-                            icon: Icons.delete_outline,
-                            label: 'Delete',
-                            onPressed: _deleteFromHistory,
-                          ),
                       ],
                     ),
                   ],
@@ -596,7 +562,15 @@ class _ResultScreenState extends State<ResultScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.link, color: Colors.blue[400], size: 20),
+                SvgPicture.asset(
+                  'assets/images/scan_result-page/link.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xFF7ACBFF),
+                    BlendMode.srcIn,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 const Text(
                   'Website URL',
@@ -612,8 +586,25 @@ class _ResultScreenState extends State<ResultScreen> {
             Text(
               _getShortUrl(widget.code),
               style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Full Content',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              widget.code,
+              style: const TextStyle(
+                fontSize: 14,
                 color: Colors.black,
               ),
             ),
@@ -810,11 +801,26 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildActionButtons() {
     switch (_qrType) {
       case QRType.url:
-        return SizedBox(
+        return Container(
           width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF7ACBFF),
+                Color(0xFF5AB8E8),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: ElevatedButton.icon(
             onPressed: _openUrl,
-            icon: const Icon(Icons.open_in_new, color: Colors.white),
+            icon: SvgPicture.asset(
+              'assets/images/scan_result-page/open_link.svg',
+              width: 20,
+              height: 20,
+            ),
             label: const Text(
               'Open Link',
               style: TextStyle(
@@ -824,7 +830,8 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[400],
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -930,7 +937,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Widget _buildActionButton({
-    required IconData icon,
+    required String iconPath,
     required String label,
     required VoidCallback onPressed,
     bool isActive = false,
@@ -938,30 +945,41 @@ class _ResultScreenState extends State<ResultScreen> {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: OutlinedButton.icon(
+        child: OutlinedButton(
           onPressed: onPressed,
-          icon: Icon(
-            icon,
-            color: isActive ? Colors.blue[400] : Colors.grey[700],
-            size: 20,
-          ),
-          label: Text(
-            label,
-            style: TextStyle(
-              color: isActive ? Colors.blue[400] : Colors.grey[700],
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
             side: BorderSide(
-              color: isActive ? Colors.blue[400]! : Colors.grey[300]!,
+              color: isActive ? const Color(0xFF7ACBFF) : Colors.grey[300]!,
+              width: isActive ? 2 : 1,
             ),
             backgroundColor: Colors.white,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                iconPath,
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  isActive ? const Color(0xFF7ACBFF) : const Color(0xFF5A5A5A),
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? const Color(0xFF7ACBFF) : Colors.grey[700],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),
