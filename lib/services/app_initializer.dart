@@ -9,6 +9,7 @@ import 'analytics_service.dart';
 import 'appsflyer_service.dart';
 import 'att_service.dart';
 import 'history_service.dart';
+import 'saved_qr_service.dart';
 
 /// Centralized service initialization to reduce code duplication in main.dart
 class AppInitializer {
@@ -35,8 +36,9 @@ class AppInitializer {
     // Initialize Analytics
     await _initializeAnalytics();
 
-    // Load history
+    // Load history and saved QR codes
     await _loadHistory();
+    await _loadSavedQRCodes();
   }
 
   static Future<void> _initializeFirebase() async {
@@ -103,6 +105,13 @@ class AppInitializer {
     await _initializeService(
       'History',
       () => HistoryService().loadHistory(),
+    );
+  }
+
+  static Future<void> _loadSavedQRCodes() async {
+    await _initializeService(
+      'Saved QR Codes',
+      () => SavedQRService.instance.loadSavedCodes(),
     );
   }
 
