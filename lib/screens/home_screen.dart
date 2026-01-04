@@ -25,12 +25,22 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeTabScreen(),
-    const QRScannerScreen(),
-    const MyQRCodesScreen(),
-    const HistoryScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeTabScreen(onNavigateToScan: () {
+        setState(() {
+          _currentIndex = 1;
+        });
+      }),
+      const QRScannerScreen(),
+      const MyQRCodesScreen(),
+      const HistoryScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNavItem(String iconPath, String label, int index) {
     final isSelected = _currentIndex == index;
-    final activeColor = const Color(0xFF7ACBFF); // Light blue from gradient
-    final inactiveColor = const Color(0xFFB0B0B0); // Grey color
+    const activeColor = Color(0xFF7ACBFF); // Light blue from gradient
+    const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
     // Выбираем активную или неактивную версию иконки
     final String activeIconPath = iconPath.replaceAll('.svg', '-activ.svg');
@@ -115,6 +125,13 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _currentIndex = index;
           });
+          // Если переключаемся на экран сканирования, убеждаемся что камера запущена
+          if (index == 1) {
+            // Даем время для переключения экрана
+            Future.delayed(const Duration(milliseconds: 100), () {
+              // Экран сканирования сам запустит камеру в didChangeDependencies
+            });
+          }
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -150,7 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomeTabScreen extends StatefulWidget {
-  const HomeTabScreen({super.key});
+  final VoidCallback? onNavigateToScan;
+
+  const HomeTabScreen({super.key, this.onNavigateToScan});
 
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
@@ -207,16 +226,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // Header section
-                Text(
-                  'Главный экран',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 8),
                 // Welcome section
                 const Text(
                   'Welcome, Name!',
@@ -250,8 +259,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: const Color(0xFF7ACBFF), // Bright blue
                       title: 'Scan QR',
                       subtitle: 'Quick scan',
-                      onTap: () => NavigationHelper.push(
-                          context, const QRScannerScreen()),
+                      onTap: () {
+                        widget.onNavigateToScan?.call();
+                      },
                     ),
                     _buildActionCard(
                       context,
@@ -418,6 +428,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Widget _buildRecentActivityItem(BuildContext context, ScanHistoryItem item) {
     final isUrl = UrlHelper.isUrl(item.code);
     final isCreated = item.action == 'Created';
+    final isShared = item.action == 'Shared';
     final isWifi = item.type == 'WIFI';
     final isContact = item.type == 'CONTACT';
 
@@ -430,10 +441,14 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       iconPath = 'assets/images/home-page/plus.svg';
       iconColor = const Color(0xFF77C97E); // Bright green
       activityText = 'Created WiFi QR';
-    } else if (isCreated && isContact) {
+    } else if ((isCreated || isShared) && isContact) {
       iconPath = 'assets/images/home-page/shared.svg';
       iconColor = const Color(0xFFFFB86C); // Bright orange
       activityText = 'Shared contact QR';
+    } else if (isShared) {
+      iconPath = 'assets/images/home-page/shared.svg';
+      iconColor = const Color(0xFFFFB86C); // Bright orange
+      activityText = 'Shared QR code';
     } else if (isUrl) {
       iconPath = 'assets/images/home-page/link.svg';
       iconColor = const Color(0xFF7ACBFF); // Bright blue
@@ -462,7 +477,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         child: InkWell(
           onTap: () => NavigationHelper.push(
             context,
-            ResultScreen(code: item.code, fromHistory: true),
+            ResultScreen(
+              code: item.code,
+              fromHistory: true,
+              historyId: item.id,
+            ),
           ),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -536,15 +555,15 @@ class _BottomNavBarClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    final notchWidth = 80.0; // Длина выемки
-    final notchDepth = 25.0; // Глубина выемки
+    const notchWidth = 80.0; // Длина выемки
+    const notchDepth = 25.0; // Глубина выемки
     final centerX = size.width / 2;
 
     // Начинаем с левого верхнего угла
     path.moveTo(0, 0);
 
     // Верхняя линия до начала выемки слева
-    final transitionWidth = 15.0; // Ширина переходной зоны
+    const transitionWidth = 15.0; // Ширина переходной зоны
     path.lineTo(centerX - notchWidth / 2 - transitionWidth, 0);
 
     // Левая часть выемки (симметричная плавная кривая вниз)
@@ -560,7 +579,7 @@ class _BottomNavBarClipper extends CustomClipper<Path> {
     // Нижняя часть выемки (симметричный полукруг до максимальной глубины)
     path.arcToPoint(
       Offset(centerX + notchWidth / 2, notchDepth),
-      radius: Radius.elliptical(notchWidth / 2, notchDepth),
+      radius: const Radius.elliptical(notchWidth / 2, notchDepth),
       clockwise: false,
     );
 

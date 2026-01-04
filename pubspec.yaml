@@ -70,4 +70,9 @@ flutter:
     - assets/images/home-page/link.svg
     - assets/images/home-page/plus.svg
     - assets/images/home-page/shared.svg
+    - assets/images/scan_result-page/copy.svg
+    - assets/images/scan_result-page/link.svg
+    - assets/images/scan_result-page/open_link.svg
+    - assets/images/scan_result-page/save.svg
+    - assets/images/scan_result-page/scare.svg
 

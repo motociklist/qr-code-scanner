@@ -10,8 +10,6 @@ import '../services/apphud_service.dart';
 import '../services/ads_service.dart';
 import '../services/analytics_service.dart';
 import '../services/appsflyer_service.dart';
-import '../services/history_service.dart';
-import '../models/scan_history_item.dart';
 import '../utils/navigation_helper.dart';
 
 // Helper to check if platform is mobile (only works on mobile)
@@ -37,12 +35,8 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen>
-    with SingleTickerProviderStateMixin {
-  final MobileScannerController controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-    torchEnabled: false,
-  );
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  late MobileScannerController controller;
 
   final ImagePicker _imagePicker = ImagePicker();
   bool _isPermissionGranted = false;
@@ -53,8 +47,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   late Animation<double> _scanLineAnimation;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
+    _initializeController();
     _checkCameraPermission();
     _scanLineController = AnimationController(
       duration: const Duration(seconds: 2),
@@ -69,6 +67,22 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
     // Log screen view
     AnalyticsService.instance.logScreenView('qr_scanner_screen');
+  }
+
+  void _initializeController() {
+    controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+      returnImage: false,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // MobileScanner автоматически запускает камеру при отображении
+    // При использовании IndexedStack камера должна запуститься автоматически
   }
 
   Future<void> _checkCameraPermission() async {
@@ -153,38 +167,18 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   }
 
   void _showResultDialog(String code) async {
-    // Save to history
-    final historyService = HistoryService();
-    await historyService.loadHistory();
-    final item = ScanHistoryItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      code: code,
-      timestamp: DateTime.now(),
-      type: _detectQRType(code),
-      action: 'Scanned',
-    );
-    await historyService.addScan(item);
-
+    // НЕ сохраняем автоматически в историю - только если пользователь нажмет "Save" или "Share"
     if (mounted) {
-      NavigationHelper.push(context, ResultScreen(code: code), replace: true);
+      // Используем обычный push вместо replace, чтобы можно было вернуться к экрану сканирования
+      await NavigationHelper.push(context, ResultScreen(code: code));
+      // После возврата из экрана результата возобновляем сканирование
+      if (mounted) {
+        setState(() {
+          _isScanning = true;
+          _scannedCode = null;
+        });
+      }
     }
-  }
-
-  String? _detectQRType(String code) {
-    if (code.startsWith('http://') || code.startsWith('https://')) {
-      return 'URL';
-    } else if (code.startsWith('tel:')) {
-      return 'PHONE';
-    } else if (code.startsWith('mailto:')) {
-      return 'EMAIL';
-    } else if (code.startsWith('WIFI:')) {
-      return 'WIFI';
-    } else if (code.startsWith('BEGIN:VCARD')) {
-      return 'CONTACT';
-    } else if (code.startsWith('sms:')) {
-      return 'SMS';
-    }
-    return 'TEXT';
   }
 
   Future<void> _pickImageFromGallery() async {
@@ -274,6 +268,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
