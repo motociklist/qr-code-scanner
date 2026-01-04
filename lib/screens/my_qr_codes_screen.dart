@@ -34,15 +34,40 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
   void initState() {
     super.initState();
     _loadSavedCodes();
+    // Слушаем изменения для автоматической синхронизации
+    _savedQRService.addListener(_onSavedCodesChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Обновляем список при возврате на экран
+    _loadSavedCodes();
+  }
+
+  @override
+  void dispose() {
+    _savedQRService.removeListener(_onSavedCodesChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSavedCodesChanged() {
+    if (mounted) {
+      setState(() {}); // Автоматически обновляем UI при изменениях
+    }
   }
 
   Future<void> _loadSavedCodes() async {
     await _savedQRService.loadSavedCodes();
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   List<SavedQRCode> get _filteredCodes {
-    var codes = _savedQRService.getCodesByType(_selectedFilter == 'All' ? null : _selectedFilter);
+    var codes = _savedQRService
+        .getCodesByType(_selectedFilter == 'All' ? null : _selectedFilter);
     if (_searchQuery.isNotEmpty) {
       codes = codes.where((code) {
         return code.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -80,7 +105,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                   ResultScreen(code: code.content, fromHistory: true),
                 );
                 _savedQRService.incrementViewCount(code.id);
-                setState(() {});
+                // setState не нужен - автоматически обновится через listener
               },
             ),
             ListTile(
@@ -134,12 +159,6 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -190,7 +209,8 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
             // Search bar (if searching)
             if (_isSearching)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
@@ -244,7 +264,8 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                     )
                   : GridView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
@@ -291,10 +312,12 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                 ),
               ),
               child: Center(
-                child: Icon(
-                  Icons.qr_code_2,
-                  size: 60,
-                  color: Colors.blue[700],
+                child: QrImageView(
+                  data: code.content,
+                  version: QrVersions.auto,
+                  size: 120,
+                  backgroundColor: Colors.blue[100]!,
+                  padding: const EdgeInsets.all(8),
                 ),
               ),
             ),
@@ -340,13 +363,13 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const Spacer(),
-                          Text(
-                            DateFormatter.formatDate(code.createdAt),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[500],
-                            ),
-                          ),
+                  Text(
+                    DateFormatter.formatDate(code.createdAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[500],
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
