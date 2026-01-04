@@ -1,9 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/navigation_helper.dart';
 import '../constants/app_styles.dart';
 import 'home_screen.dart';
+
+class _NoScrollbarScrollBehavior extends ScrollBehavior {
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
+  }
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
+}
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -180,57 +207,59 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   Widget _buildPage(OnboardingPage page, bool isFirstPage, int pageIndex) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          top: 90.0,
-          left: 24.0,
-          right: 24.0,
-          bottom: 24.0,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Title first for all pages
-            Text(
-              page.title,
-              style: AppStyles.largeTitle,
-              textAlign: TextAlign.center,
-            ),
-            // Illustration
-            _buildIllustration(page, isFirstPage),
-            const SizedBox(height: 20),
-            // Subtitle
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 17.0, // 24 (parent) + 17 = 41px from edge
-              ),
-              child: Text(
-                page.subtitle,
-                style: AppStyles.title2,
+    return ScrollConfiguration(
+      behavior: _NoScrollbarScrollBehavior(),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: 90.0,
+            left: 24.0,
+            right: 24.0,
+            bottom: 24.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Title first for all pages
+              Text(
+                page.title,
+                style: AppStyles.largeTitle,
                 textAlign: TextAlign.center,
               ),
-            ),
-            if (page.description.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              // Description
+              // Illustration
+              _buildIllustration(page, isFirstPage),
+              // Subtitle
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 30.0, // 24 (parent) + 21 = 45px from edge
+                  horizontal: 1.0, // 24 (parent) + 1 = 25px from edge
                 ),
                 child: Text(
-                  page.description,
-                  style: AppStyles.body.copyWith(
-                    fontSize: 16,
-                    height: 21 / 16, // line height 21 for font size 16
-                    letterSpacing: -0.5,
-                    color: const Color(0xFF111111),
-                  ),
+                  page.subtitle,
+                  style: AppStyles.title2,
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (page.description.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                // Description
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30.0, // 24 (parent) + 21 = 45px from edge
+                  ),
+                  child: Text(
+                    page.description,
+                    style: AppStyles.body.copyWith(
+                      fontSize: 16,
+                      height: 21 / 16, // line height 21 for font size 16
+                      letterSpacing: -0.5,
+                      color: const Color(0xFF111111),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
