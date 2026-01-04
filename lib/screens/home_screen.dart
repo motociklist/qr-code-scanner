@@ -25,12 +25,22 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeTabScreen(),
-    const QRScannerScreen(),
-    const MyQRCodesScreen(),
-    const HistoryScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeTabScreen(onNavigateToScan: () {
+        setState(() {
+          _currentIndex = 1;
+        });
+      }),
+      const QRScannerScreen(),
+      const MyQRCodesScreen(),
+      const HistoryScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +125,13 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _currentIndex = index;
           });
+          // Если переключаемся на экран сканирования, убеждаемся что камера запущена
+          if (index == 1) {
+            // Даем время для переключения экрана
+            Future.delayed(const Duration(milliseconds: 100), () {
+              // Экран сканирования сам запустит камеру в didChangeDependencies
+            });
+          }
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -150,7 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomeTabScreen extends StatefulWidget {
-  const HomeTabScreen({super.key});
+  final VoidCallback? onNavigateToScan;
+
+  const HomeTabScreen({super.key, this.onNavigateToScan});
 
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
@@ -207,16 +226,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // Header section
-                Text(
-                  'Главный экран',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 8),
                 // Welcome section
                 const Text(
                   'Welcome, Name!',
@@ -250,8 +259,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: const Color(0xFF7ACBFF), // Bright blue
                       title: 'Scan QR',
                       subtitle: 'Quick scan',
-                      onTap: () => NavigationHelper.push(
-                          context, const QRScannerScreen()),
+                      onTap: () {
+                        widget.onNavigateToScan?.call();
+                      },
                     ),
                     _buildActionCard(
                       context,

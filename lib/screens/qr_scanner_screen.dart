@@ -37,12 +37,8 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen>
-    with SingleTickerProviderStateMixin {
-  final MobileScannerController controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-    torchEnabled: false,
-  );
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  late MobileScannerController controller;
 
   final ImagePicker _imagePicker = ImagePicker();
   bool _isPermissionGranted = false;
@@ -53,8 +49,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   late Animation<double> _scanLineAnimation;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
+    _initializeController();
     _checkCameraPermission();
     _scanLineController = AnimationController(
       duration: const Duration(seconds: 2),
@@ -69,6 +69,22 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
     // Log screen view
     AnalyticsService.instance.logScreenView('qr_scanner_screen');
+  }
+
+  void _initializeController() {
+    controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+      returnImage: false,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // MobileScanner автоматически запускает камеру при отображении
+    // При использовании IndexedStack камера должна запуститься автоматически
   }
 
   Future<void> _checkCameraPermission() async {
@@ -274,6 +290,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
