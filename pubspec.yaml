@@ -75,4 +75,9 @@ flutter:
     - assets/images/scan_result-page/open_link.svg
     - assets/images/scan_result-page/save.svg
     - assets/images/scan_result-page/scare.svg
+    - assets/images/creacte-page/link.svg
+    - assets/images/creacte-page/a.svg
+    - assets/images/creacte-page/person.svg
+    - assets/images/creacte-page/wi-fi.svg
+    - assets/images/creacte-page/cross.svg
 

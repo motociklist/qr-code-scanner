@@ -1,11 +1,13 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/saved_qr_code.dart';
 
-class SavedQRService {
+class SavedQRService extends ChangeNotifier {
   static const String _key = 'saved_qr_codes';
   static SavedQRService? _instance;
   List<SavedQRCode> _savedCodes = [];
+  bool _isLoaded = false;
 
   SavedQRService._();
 
@@ -17,41 +19,58 @@ class SavedQRService {
   List<SavedQRCode> get savedCodes => List.unmodifiable(_savedCodes);
 
   Future<void> loadSavedCodes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_key);
-    if (jsonString != null) {
-      final List<dynamic> jsonList = json.decode(jsonString);
-      _savedCodes = jsonList
-          .map((json) => SavedQRCode.fromJson(json as Map<String, dynamic>))
-          .toList();
+    if (_isLoaded) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_key);
+      if (jsonString != null) {
+        final List<dynamic> jsonList = json.decode(jsonString);
+        _savedCodes = jsonList
+            .map((json) => SavedQRCode.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      _isLoaded = true;
+      notifyListeners();
+    } catch (e) {
+      _savedCodes = [];
+      _isLoaded = true;
     }
   }
 
   Future<void> saveCode(SavedQRCode code) async {
+    await loadSavedCodes();
     _savedCodes.add(code);
     await _saveToStorage();
+    notifyListeners(); // Уведомляем всех слушателей об изменении
   }
 
   Future<void> updateCode(SavedQRCode code) async {
+    await loadSavedCodes();
     final index = _savedCodes.indexWhere((c) => c.id == code.id);
     if (index != -1) {
       _savedCodes[index] = code;
       await _saveToStorage();
+      notifyListeners(); // Уведомляем всех слушателей об изменении
     }
   }
 
   Future<void> deleteCode(String id) async {
+    await loadSavedCodes();
     _savedCodes.removeWhere((code) => code.id == id);
     await _saveToStorage();
+    notifyListeners(); // Уведомляем всех слушателей об изменении
   }
 
   Future<void> incrementViewCount(String id) async {
+    await loadSavedCodes();
     final index = _savedCodes.indexWhere((c) => c.id == id);
     if (index != -1) {
       _savedCodes[index] = _savedCodes[index].copyWith(
         viewCount: _savedCodes[index].viewCount + 1,
       );
       await _saveToStorage();
+      notifyListeners(); // Уведомляем всех слушателей об изменении
     }
   }
 
