@@ -112,8 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNavItem(String iconPath, String label, int index) {
     final isSelected = _currentIndex == index;
-    final activeColor = const Color(0xFF7ACBFF); // Light blue from gradient
-    final inactiveColor = const Color(0xFFB0B0B0); // Grey color
+    const activeColor = Color(0xFF7ACBFF); // Light blue from gradient
+    const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
     // Выбираем активную или неактивную версию иконки
     final String activeIconPath = iconPath.replaceAll('.svg', '-activ.svg');
@@ -428,6 +428,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Widget _buildRecentActivityItem(BuildContext context, ScanHistoryItem item) {
     final isUrl = UrlHelper.isUrl(item.code);
     final isCreated = item.action == 'Created';
+    final isShared = item.action == 'Shared';
     final isWifi = item.type == 'WIFI';
     final isContact = item.type == 'CONTACT';
 
@@ -440,10 +441,14 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       iconPath = 'assets/images/home-page/plus.svg';
       iconColor = const Color(0xFF77C97E); // Bright green
       activityText = 'Created WiFi QR';
-    } else if (isCreated && isContact) {
+    } else if ((isCreated || isShared) && isContact) {
       iconPath = 'assets/images/home-page/shared.svg';
       iconColor = const Color(0xFFFFB86C); // Bright orange
       activityText = 'Shared contact QR';
+    } else if (isShared) {
+      iconPath = 'assets/images/home-page/shared.svg';
+      iconColor = const Color(0xFFFFB86C); // Bright orange
+      activityText = 'Shared QR code';
     } else if (isUrl) {
       iconPath = 'assets/images/home-page/link.svg';
       iconColor = const Color(0xFF7ACBFF); // Bright blue
@@ -472,7 +477,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         child: InkWell(
           onTap: () => NavigationHelper.push(
             context,
-            ResultScreen(code: item.code, fromHistory: true),
+            ResultScreen(
+              code: item.code,
+              fromHistory: true,
+              historyId: item.id,
+            ),
           ),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -546,15 +555,15 @@ class _BottomNavBarClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    final notchWidth = 80.0; // Длина выемки
-    final notchDepth = 25.0; // Глубина выемки
+    const notchWidth = 80.0; // Длина выемки
+    const notchDepth = 25.0; // Глубина выемки
     final centerX = size.width / 2;
 
     // Начинаем с левого верхнего угла
     path.moveTo(0, 0);
 
     // Верхняя линия до начала выемки слева
-    final transitionWidth = 15.0; // Ширина переходной зоны
+    const transitionWidth = 15.0; // Ширина переходной зоны
     path.lineTo(centerX - notchWidth / 2 - transitionWidth, 0);
 
     // Левая часть выемки (симметричная плавная кривая вниз)
@@ -570,7 +579,7 @@ class _BottomNavBarClipper extends CustomClipper<Path> {
     // Нижняя часть выемки (симметричный полукруг до максимальной глубины)
     path.arcToPoint(
       Offset(centerX + notchWidth / 2, notchDepth),
-      radius: Radius.elliptical(notchWidth / 2, notchDepth),
+      radius: const Radius.elliptical(notchWidth / 2, notchDepth),
       clockwise: false,
     );
 

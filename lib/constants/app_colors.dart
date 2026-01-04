@@ -28,11 +28,11 @@ class AppColors {
 }
 
 class AppTheme {
-  static const _Colors colors = _Colors();
+  static const AppThemeColors colors = AppThemeColors();
 }
 
-class _Colors {
-  const _Colors();
+class AppThemeColors {
+  const AppThemeColors();
 
   Color get strokeColor => AppColors.strokeColor;
 }

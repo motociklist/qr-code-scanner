@@ -204,7 +204,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: InkWell(
         onTap: () => NavigationHelper.push(
           context,
-          ResultScreen(code: item.code, fromHistory: true),
+          ResultScreen(
+            code: item.code,
+            fromHistory: true,
+            historyId: item.id,
+          ),
         ),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -224,7 +228,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      QRTypeHelper.getTitle(item.type, item.code),
+                      QRTypeHelper.getTitle(item.type, item.code, action: item.action),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
