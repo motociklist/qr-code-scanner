@@ -22,5 +22,18 @@ class AppColors {
   static const Color success = Color(0xFF4CAF50);
   static const Color error = Color(0xFFE53935);
   static const Color warning = Color(0xFFFF9800);
+
+  // Icon colors
+  static const Color strokeColor = Colors.white;
+}
+
+class AppTheme {
+  static const _Colors colors = _Colors();
+}
+
+class _Colors {
+  const _Colors();
+
+  Color get strokeColor => AppColors.strokeColor;
 }
 
