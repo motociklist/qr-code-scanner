@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/scan_history_item.dart';
 import '../services/history_service.dart';
 import '../components/filter_chips.dart';
@@ -9,7 +10,6 @@ import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../utils/qr_type_helper.dart';
 import '../utils/navigation_helper.dart';
-import '../utils/dialog_helper.dart';
 import 'result_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -97,7 +97,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -109,28 +109,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       color: Colors.black,
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      Icons.more_vert,
-                      color: Colors.grey[700],
-                    ),
-                    onSelected: (value) {
-                      if (value == 'clear') {
-                        _clearAllHistory();
-                      }
+                  GestureDetector(
+                    onTap: () {
+                      // Filter/sort action - can be implemented later
                     },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'clear',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Clear All History', style: TextStyle(color: Colors.red)),
-                          ],
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFF6F7FA),
+                      ),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/images/history-page/arrow-up.svg',
+                          width: 16,
+                          height: 13,
+                          colorFilter: const ColorFilter.mode(
+                            Color(0xFF666666),
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -145,7 +146,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 });
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             // History list
             Expanded(
               child: groupedHistory.isEmpty
@@ -186,10 +187,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Widget _buildIconWidget(ScanHistoryItem item) {
+    final backgroundColor = QRTypeHelper.getIconColor(item.type, item.action);
+    final isCreated = item.action == 'Created';
+
+    // For QR code (scanned items that are not WIFI, CONTACT, or Created)
+    if (item.action != 'Created' && item.type != 'WIFI' && item.type != 'CONTACT') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/qr.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For other icons (plus, etc.)
+    return IconCircle(
+      icon: QRTypeHelper.getIcon(item.type, item.action),
+      backgroundColor: backgroundColor,
+      iconColor: Colors.white,
+      iconSize: isCreated ? 15 : 16,
+    );
+  }
+
   Widget _buildHistoryItem(ScanHistoryItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -216,11 +252,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           child: Row(
             children: [
               // Icon
-              IconCircle(
-                icon: QRTypeHelper.getIcon(item.type, item.action),
-                backgroundColor: QRTypeHelper.getIconColor(item.type, item.action),
-                iconColor: Colors.white,
-              ),
+              _buildIconWidget(item),
               const SizedBox(width: 16),
               // Content
               Expanded(
@@ -256,32 +288,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ],
                 ),
               ),
-              // Action buttons
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ActionButtons(content: item.code),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[200],
-                      ),
-                      child: Icon(
-                        Icons.delete_outline,
-                        size: 16,
-                        color: Colors.red[700],
-                      ),
-                    ),
-                    onPressed: () => _deleteItem(item),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
+              // Action buttons (only copy and share, no delete)
+              ActionButtons(content: item.code),
             ],
           ),
         ),
@@ -289,49 +297,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Future<void> _deleteItem(ScanHistoryItem item) async {
-    final confirmed = await DialogHelper.showConfirmationDialog(
-      context: context,
-      title: 'Delete Item',
-      content: 'Are you sure you want to delete this item from history?',
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
-
-    if (confirmed) {
-      await _historyService.removeScan(item.id);
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Item deleted'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _clearAllHistory() async {
-    final confirmed = await DialogHelper.showConfirmationDialog(
-      context: context,
-      title: 'Clear All History',
-      content: 'Are you sure you want to delete all history? This action cannot be undone.',
-      confirmText: 'Clear All',
-      isDestructive: true,
-    );
-
-    if (confirmed) {
-      await _historyService.clearHistory();
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('All history cleared'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
 }

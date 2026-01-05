@@ -92,4 +92,8 @@ flutter:
     - assets/images/subscr-page/cloud.svg
     - assets/images/subscr-page/graf.svg
     - assets/images/subscr-page/cross.svg
+    - assets/images/history-page/copy.svg
+    - assets/images/history-page/shared.svg
+    - assets/images/history-page/qr.svg
+    - assets/images/history-page/arrow-up.svg
 

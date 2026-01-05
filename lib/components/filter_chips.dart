@@ -14,39 +14,45 @@ class FilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 50,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: filters.length,
-        itemBuilder: (context, index) {
-          final filter = filters[index];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: filters.map((filter) {
           final isSelected = selectedFilter == filter;
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilterChip(
-              label: Text(filter),
-              selected: isSelected,
-              onSelected: (selected) {
-                onFilterChanged(filter);
-              },
-              selectedColor: Colors.blue[200],
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[700],
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 14,
+            padding: EdgeInsets.only(right: filter != filters.last ? 12 : 0),
+            child: GestureDetector(
+              onTap: () => onFilterChanged(filter),
+              child: Container(
+                height: 39,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? const LinearGradient(
+                          colors: [
+                            Color(0xFF7ACBFF), // light blue
+                            Color(0xFF4DA6FF), // darker blue
+                          ],
+                        )
+                      : null,
+                  color: isSelected ? null : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(19.5),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  filter,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontSize: 14,
+                  ),
+                ),
               ),
-              backgroundColor: Colors.grey[200],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
 }
-
