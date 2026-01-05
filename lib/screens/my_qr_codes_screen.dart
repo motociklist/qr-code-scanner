@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/saved_qr_code.dart';
 import '../services/saved_qr_service.dart';
 import '../components/filter_chips.dart';
@@ -187,10 +188,17 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                         shape: BoxShape.circle,
                         color: Colors.grey[200],
                       ),
-                      child: const Icon(
-                        Icons.search,
-                        color: Colors.black,
-                        size: 20,
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/images/my_qr_code-page/search.svg',
+                          width: 12,
+                          height: 12,
+                          fit: BoxFit.contain,
+                          colorFilter: const ColorFilter.mode(
+                            Colors.black,
+                            BlendMode.srcIn,
+                          ),
+                        ),
                       ),
                     ),
                     onPressed: () {
@@ -300,31 +308,40 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Top blue section with QR icon
+          // Top section with blue block containing QR icon
           Expanded(
-            flex: 2,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.blue[100],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.center,
+                    end: Alignment.topRight,
+                    colors: [
+                      Color(0xFF7ACBFF), // Светло-голубой
+                      Color(0xFF4DA6FF), // Более темный голубой
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-              child: Center(
-                child: QrImageView(
-                  data: code.content,
-                  version: QrVersions.auto,
-                  size: 120,
-                  backgroundColor: Colors.blue[100]!,
-                  padding: const EdgeInsets.all(8),
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/images/my_qr_code-page/qr.svg',
+                    width: 42,
+                    height: 42,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
           // Bottom section with details
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -344,47 +361,74 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.more_vert, size: 18),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => _showOptionsMenu(context, code),
+                      GestureDetector(
+                        onTap: () => _showOptionsMenu(context, code),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/images/my_qr_code-page/dots.svg',
+                              width: 11,
+                              height: 3,
+                              colorFilter: const ColorFilter.mode(
+                                Color(0xFF5A5A5A),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _getSubtitle(code),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const Spacer(),
-                  Text(
-                    DateFormatter.formatDate(code.createdAt),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.visibility,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 4),
                       Text(
-                        '${code.viewCount}',
+                        DateFormatter.formatDate(code.createdAt),
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[500],
+                          color: Colors.grey[600],
                         ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/images/my_qr_code-page/eye.svg',
+                            width: 14,
+                            height: 14,
+                            colorFilter: const ColorFilter.mode(
+                              Color(0xFFB0B0B0),
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${code.viewCount}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFB0B0B0),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
