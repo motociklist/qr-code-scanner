@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ActionButtons extends StatelessWidget {
@@ -39,13 +40,13 @@ class ActionButtons extends StatelessWidget {
       children: [
         _buildActionButton(
           context: context,
-          icon: Icons.copy,
+          iconPath: 'assets/images/history-page/copy.svg',
           onPressed: () => _copyToClipboard(context),
         ),
         const SizedBox(width: 8),
         _buildActionButton(
           context: context,
-          icon: Icons.share,
+          iconPath: 'assets/images/history-page/shared.svg',
           onPressed: _shareContent,
         ),
       ],
@@ -54,26 +55,30 @@ class ActionButtons extends StatelessWidget {
 
   Widget _buildActionButton({
     required BuildContext context,
-    required IconData icon,
+    required String iconPath,
     required VoidCallback onPressed,
   }) {
-    return IconButton(
-      icon: Container(
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
         width: 32,
         height: 32,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.grey[200],
+          color: Color(0xFFF6F7FA),
         ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: Colors.grey[700],
+        child: Center(
+          child: SvgPicture.asset(
+            iconPath,
+            width: 12,
+            height: 12,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF666666),
+              BlendMode.srcIn,
+            ),
+          ),
         ),
       ),
-      onPressed: onPressed,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
     );
   }
 }
