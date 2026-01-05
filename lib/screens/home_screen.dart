@@ -7,9 +7,8 @@ import 'create_qr_screen.dart';
 import '../services/history_service.dart';
 import '../models/scan_history_item.dart';
 import 'result_screen.dart';
-// FIXME: Temporarily disabled - re-enable when subscription check is restored
-// import '../services/apphud_service.dart';
-// import 'pricing_screen.dart';
+import '../services/apphud_service.dart';
+import 'pricing_screen.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
@@ -274,14 +273,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       title: 'Create QR',
                       subtitle: 'Generate new',
                       onTap: () {
-                        // FIXME: Temporarily disabled subscription check for creating QR codes
-                        // TODO: Re-enable subscription check when ready
-                        // if (!ApphudService.instance
-                        //     .canUseFeature('create_qr')) {
-                        //   NavigationHelper.push(context, const PricingScreen());
-                        // } else {
-                        NavigationHelper.push(context, const CreateQRScreen());
-                        // }
+                        // Check subscription for creating QR codes
+                        if (!ApphudService.instance.canUseFeature('create_qr')) {
+                          NavigationHelper.push(context, const PricingScreen());
+                        } else {
+                          NavigationHelper.push(context, const CreateQRScreen());
+                        }
                       },
                     ),
                     _buildActionCard(
