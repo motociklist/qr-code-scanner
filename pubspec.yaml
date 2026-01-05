@@ -80,4 +80,8 @@ flutter:
     - assets/images/creacte-page/person.svg
     - assets/images/creacte-page/wi-fi.svg
     - assets/images/creacte-page/cross.svg
+    - assets/images/my_qr_code-page/search.svg
+    - assets/images/my_qr_code-page/qr.svg
+    - assets/images/my_qr_code-page/dots.svg
+    - assets/images/my_qr_code-page/eye.svg
 

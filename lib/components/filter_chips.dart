@@ -31,12 +31,16 @@ class FilterChips extends StatelessWidget {
               onSelected: (selected) {
                 onFilterChanged(filter);
               },
-              selectedColor: Colors.blue[100],
+              selectedColor: Colors.blue[200],
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.black,
+                color: isSelected ? Colors.white : Colors.grey[700],
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 14,
               ),
               backgroundColor: Colors.grey[200],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
           );
