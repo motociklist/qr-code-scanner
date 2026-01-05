@@ -1,22 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import '../models/saved_qr_code.dart';
-import '../services/saved_qr_service.dart';
 // FIXME: Temporarily disabled - re-enable when subscription check is restored
 // import '../services/apphud_service.dart';
 import '../services/analytics_service.dart';
 import '../services/ads_service.dart';
 import '../services/appsflyer_service.dart';
-import '../services/history_service.dart';
-import '../models/scan_history_item.dart';
 import '../constants/app_styles.dart';
+import 'qr_result_screen.dart';
 // FIXME: Temporarily disabled - re-enable when subscription check is restored
 // import '../utils/navigation_helper.dart';
 // import 'pricing_screen.dart';
@@ -40,8 +31,6 @@ class CreateQRScreen extends StatefulWidget {
 class _CreateQRScreenState extends State<CreateQRScreen> {
   QRType _selectedType = QRType.url;
   final Map<QRType, Map<String, TextEditingController>> _controllers = {};
-  final GlobalKey _qrKey = GlobalKey();
-  String? _generatedQRData;
   Color _selectedColor = Colors.black;
 
   @override
@@ -175,11 +164,20 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       'type': _selectedType.name,
     });
 
-    setState(() {
-      _generatedQRData = data;
-    });
-
     AnalyticsService.instance.logQRCreate(_selectedType.name);
+
+    // Navigate to QR result screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRResultScreen(
+          qrData: data,
+          qrColor: _selectedColor,
+          qrType: _getTypeString(),
+          qrTitle: _getTitleForType(),
+        ),
+      ),
+    );
   }
 
   // FIXME: Temporarily disabled - re-enable when subscription check is restored
@@ -209,102 +207,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
   }
 
-  Future<void> _saveQRCode() async {
-    if (_generatedQRData == null) return;
-
-    final title = _getTitleForType();
-    final type = _getTypeString();
-
-    final qrCode = SavedQRCode(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      content: _generatedQRData!,
-      type: type,
-      createdAt: DateTime.now(),
-    );
-
-    await SavedQRService.instance.saveCode(qrCode);
-
-    // Также сохраняем в историю сканирований с action='Created'
-    final historyService = HistoryService();
-    await historyService.loadHistory();
-    final historyItem = ScanHistoryItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      code: _generatedQRData!,
-      timestamp: DateTime.now(),
-      type: type,
-      action: 'Created',
-    );
-    await historyService.addScan(historyItem);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR code saved successfully')),
-      );
-      Navigator.pop(context);
-    }
-  }
-
-  Future<void> _saveImage() async {
-    if (_generatedQRData == null) return;
-
-    try {
-      final boundary =
-          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-
-      // Сохраняем во временный файл
-      final directory = await getTemporaryDirectory();
-      final fileName = 'qr_code_${DateTime.now().millisecondsSinceEpoch}.png';
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(byteData.buffer.asUint8List());
-
-      // Открываем диалог "Поделиться" для сохранения изображения
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'QR Code',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving image: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _shareQR() async {
-    if (_generatedQRData == null) return;
-
-    try {
-      final boundary =
-          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) {
-        await Share.share(_generatedQRData!);
-        return;
-      }
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) {
-        await Share.share(_generatedQRData!);
-        return;
-      }
-
-      final tempDir = await getTemporaryDirectory();
-      final file = File(
-          '${tempDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.png');
-      await file.writeAsBytes(byteData.buffer.asUint8List());
-
-      await Share.shareXFiles([XFile(file.path)], text: _generatedQRData!);
-    } catch (e) {
-      await Share.share(_generatedQRData!);
-    }
-  }
 
   String _getTitleForType() {
     switch (_selectedType) {
@@ -368,9 +270,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
                     const SizedBox(height: 24),
                     // Generate button
                     _buildGenerateButton(),
-                    const SizedBox(height: 24),
-                    // Generated QR code
-                    if (_generatedQRData != null) _buildGeneratedQR(),
                   ],
                 ),
               ),
@@ -455,7 +354,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       onTap: () {
         setState(() {
           _selectedType = type;
-          _generatedQRData = null;
         });
       },
       child: Container(
@@ -887,88 +785,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
   }
 
-  Widget _buildGeneratedQR() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          RepaintBoundary(
-            key: _qrKey,
-            child: QrImageView(
-              data: _generatedQRData!,
-              version: QrVersions.auto,
-              size: 250,
-              backgroundColor: Colors.white,
-              eyeStyle: QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: _selectedColor,
-              ),
-              dataModuleStyle: QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: _selectedColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildActionButton(
-                icon: Icons.save,
-                label: 'Save',
-                onPressed: _saveQRCode,
-              ),
-              _buildActionButton(
-                icon: Icons.image,
-                label: 'Save Image',
-                onPressed: _saveImage,
-              ),
-              _buildActionButton(
-                icon: Icons.share,
-                label: 'Share',
-                onPressed: _shareQR,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.blue[50],
-          ),
-          child: IconButton(
-            icon: Icon(icon, color: Colors.blue[400]),
-            onPressed: onPressed,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[700],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildBottomNavigationBar() {
     return ClipPath(
