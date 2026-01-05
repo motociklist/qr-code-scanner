@@ -65,17 +65,22 @@ class AppInitializer {
       debugPrint('Error requesting ATT: $e');
     }
 
-    // Initialize mobile services
-    await _initializeService(
+    // Initialize services in parallel to speed up startup
+    // Don't wait for Apphud to complete - it shouldn't block app startup
+    _initializeService(
       'Apphud',
       () => ApphudService.instance.initialize(),
-    );
+    ).catchError((e) {
+      debugPrint('Apphud initialization error (non-blocking): $e');
+    });
 
+    // Initialize AppsFlyer (will send attribution to Apphud)
     await _initializeService(
       'AppsFlyer',
       () => AppsFlyerService.instance.initialize(),
     );
 
+    // Initialize Google Mobile Ads
     await _initializeService(
       'Google Mobile Ads',
       () => AdsService.instance.initialize(),
@@ -87,6 +92,27 @@ class AppInitializer {
       await AppsFlyerService.instance.updateATTStatus(attStatus);
     } catch (e) {
       debugPrint('Error updating ATT status: $e');
+    }
+
+    // Set up attribution integration
+    await _setupAttribution();
+  }
+
+  /// Set up attribution integration between services
+  static Future<void> _setupAttribution() async {
+    try {
+      // Firebase attribution data (if available)
+      // Note: Firebase doesn't provide direct attribution API in Flutter
+      // You may need to use Firebase Dynamic Links or App Check for attribution
+      // For now, we'll set up the structure for future integration
+
+      // Apple Search Ads attribution (iOS only)
+      // Note: Apple Search Ads attribution typically requires native implementation
+      // This is a placeholder for future integration
+
+      debugPrint('Attribution integration set up');
+    } catch (e) {
+      debugPrint('Error setting up attribution: $e');
     }
   }
 

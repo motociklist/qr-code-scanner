@@ -118,7 +118,9 @@ class AppsFlyerService {
       });
 
       // Send attribution to Apphud
-      ApphudService.instance.setAttribution(attributionData);
+      ApphudService.instance.setAttribution(
+        appsFlyerData: attributionData,
+      );
 
       debugPrint('AppsFlyer conversion data: $attributionData');
     } catch (e) {

@@ -27,6 +27,7 @@ dependencies:
   flutter_contacts: ^1.1.7
   path_provider: ^2.1.4
   appsflyer_sdk: ^6.6.0
+  apphud: ^3.0.1
   flutter_localizations:
     sdk: flutter
   http: ^1.2.0
@@ -84,4 +85,11 @@ flutter:
     - assets/images/my_qr_code-page/qr.svg
     - assets/images/my_qr_code-page/dots.svg
     - assets/images/my_qr_code-page/eye.svg
+    - assets/images/subscr-page/qr.svg
+    - assets/images/subscr-page/inf.svg
+    - assets/images/subscr-page/color.svg
+    - assets/images/subscr-page/shild.svg
+    - assets/images/subscr-page/cloud.svg
+    - assets/images/subscr-page/graf.svg
+    - assets/images/subscr-page/cross.svg
 

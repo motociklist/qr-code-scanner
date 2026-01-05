@@ -16,6 +16,11 @@ public final class GeneratedPluginRegistrant {
   private static final String TAG = "GeneratedPluginRegistrant";
   public static void registerWith(@NonNull FlutterEngine flutterEngine) {
     try {
+      flutterEngine.getPlugins().add(new com.apphud.fluttersdk.ApphudPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin apphud, com.apphud.fluttersdk.ApphudPlugin", e);
+    }
+    try {
       flutterEngine.getPlugins().add(new com.appsflyer.appsflyersdk.AppsflyerSdkPlugin());
     } catch (Exception e) {
       Log.e(TAG, "Error registering plugin appsflyer_sdk, com.appsflyer.appsflyersdk.AppsflyerSdkPlugin", e);

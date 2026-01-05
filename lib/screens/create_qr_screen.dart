@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
-// FIXME: Temporarily disabled - re-enable when subscription check is restored
-// import '../services/apphud_service.dart';
+import '../services/apphud_service.dart';
 import '../services/analytics_service.dart';
 import '../services/ads_service.dart';
 import '../services/appsflyer_service.dart';
 import '../constants/app_styles.dart';
 import 'qr_result_screen.dart';
-// FIXME: Temporarily disabled - re-enable when subscription check is restored
-// import '../utils/navigation_helper.dart';
-// import 'pricing_screen.dart';
+import '../utils/navigation_helper.dart';
+import 'pricing_screen.dart';
 
 enum QRType {
   url,
@@ -151,14 +149,12 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       return;
     }
 
-    // FIXME: Temporarily disabled subscription check for creating QR codes
-    // TODO: Re-enable subscription check when ready
     // Check subscription for creating QR codes
-    // if (!ApphudService.instance.canUseFeature('create_qr')) {
-    //   _showSubscriptionRequired();
-    //   AppsFlyerService.instance.logEvent('create_qr_blocked');
-    //   return;
-    // }
+    if (!ApphudService.instance.canUseFeature('create_qr')) {
+      _showSubscriptionRequired();
+      AppsFlyerService.instance.logEvent('create_qr_blocked');
+      return;
+    }
 
     AppsFlyerService.instance.logEvent('create_qr_success', eventValues: {
       'type': _selectedType.name,
@@ -180,8 +176,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
   }
 
-  // FIXME: Temporarily disabled - re-enable when subscription check is restored
-  // ignore: unused_element
   void _showSubscriptionRequired() {
     showDialog(
       context: context,
@@ -197,8 +191,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // FIXME: Temporarily disabled - re-enable when subscription check is restored
-              // NavigationHelper.push(context, const PricingScreen());
+              NavigationHelper.push(context, const PricingScreen());
             },
             child: const Text('Subscribe'),
           ),
