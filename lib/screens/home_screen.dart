@@ -275,7 +275,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       subtitle: 'Generate new',
                       onTap: () {
                         // FIXME: Temporarily disabled subscription check for creating QR codes
-                        // TODO: Re-enable subscription check when ready
                         // if (!ApphudService.instance
                         //     .canUseFeature('create_qr')) {
                         //   NavigationHelper.push(context, const PricingScreen());

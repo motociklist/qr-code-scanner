@@ -152,7 +152,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     }
 
     // FIXME: Temporarily disabled subscription check for creating QR codes
-    // TODO: Re-enable subscription check when ready
     // Check subscription for creating QR codes
     // if (!ApphudService.instance.canUseFeature('create_qr')) {
     //   _showSubscriptionRequired();
@@ -206,7 +205,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       ),
     );
   }
-
 
   String _getTitleForType() {
     switch (_selectedType) {
@@ -784,7 +782,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       },
     );
   }
-
 
   Widget _buildBottomNavigationBar() {
     return ClipPath(
