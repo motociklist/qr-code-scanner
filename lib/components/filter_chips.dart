@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_styles.dart';
 
 class FilterChips extends StatelessWidget {
   final List<String> filters;
@@ -41,11 +42,10 @@ class FilterChips extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   filter,
-                  style: TextStyle(
+                  style: AppStyles.caption.copyWith(
                     color: isSelected ? Colors.white : Colors.black87,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
-                    fontSize: 14,
                   ),
                 ),
               ),
