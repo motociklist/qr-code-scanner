@@ -61,6 +61,7 @@ flutter:
     - assets/images/
     - assets/images/screen/bg-loading.png
     - assets/images/nav_menu/plus.svg
+    - assets/images/nav_menu/add.svg
     - assets/images/nav_menu/home.svg
     - assets/images/nav_menu/scan.svg
     - assets/images/nav_menu/my_qr_code.svg
