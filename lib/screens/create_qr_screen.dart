@@ -60,16 +60,21 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       case QRType.email:
         final emailData = QRParser.parseEmail(content);
         _controllers[QRType.email]!['email']!.text = emailData['email'] ?? '';
-        _controllers[QRType.email]!['subject']!.text = emailData['subject'] ?? '';
+        _controllers[QRType.email]!['subject']!.text =
+            emailData['subject'] ?? '';
         _controllers[QRType.email]!['body']!.text = emailData['body'] ?? '';
         break;
       case QRType.contact:
         final contactData = QRParser.parseContact(content);
         _controllers[QRType.contact]!['name']!.text = contactData['name'] ?? '';
-        _controllers[QRType.contact]!['phone']!.text = contactData['phone'] ?? '';
-        _controllers[QRType.contact]!['email']!.text = contactData['email'] ?? '';
-        _controllers[QRType.contact]!['organization']!.text = contactData['organization'] ?? '';
-        _controllers[QRType.contact]!['address']!.text = contactData['address'] ?? '';
+        _controllers[QRType.contact]!['phone']!.text =
+            contactData['phone'] ?? '';
+        _controllers[QRType.contact]!['email']!.text =
+            contactData['email'] ?? '';
+        _controllers[QRType.contact]!['organization']!.text =
+            contactData['organization'] ?? '';
+        _controllers[QRType.contact]!['address']!.text =
+            contactData['address'] ?? '';
         break;
       case QRType.wifi:
         final wifiData = QRParser.parseWiFi(content);
@@ -269,7 +274,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
   }
 
-
   String _getTitleForType() {
     switch (_selectedType) {
       case QRType.url:
@@ -313,7 +317,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
         child: Column(
           children: [
@@ -352,32 +356,50 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
 
   Widget _buildHeader() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Text(
-              widget.editingCode != null ? 'Edit QR Code' : 'Create QR Code',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+          Text(
+            widget.editingCode != null ? 'Edit QR Code' : 'Create QR Code',
+            style: AppStyles.title3,
+          ),
+          InkWell(
+            onTap: () => Navigator.pop(context),
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/images/creacte-page/cross.svg',
+                  width: 12,
+                  height: 12,
+                ),
               ),
             ),
-          ),
-          IconButton(
-            icon: SvgPicture.asset(
-              'assets/images/creacte-page/cross.svg',
-              width: 24,
-              height: 24,
-            ),
-            onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
+          )
         ],
       ),
     );
@@ -387,6 +409,11 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Content Type',
+          style: AppStyles.bodyMediumText,
+        ),
+        const SizedBox(height: 12),
         // First row: URL, Text, Contact
         Row(
           children: [
@@ -407,9 +434,15 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        // Second row: Wi-Fi
-        _buildTypeCard(
-            'Wi-Fi', QRType.wifi, 'assets/images/creacte-page/wi-fi.svg'),
+        // Second row: Wi-Fi full width
+        Row(
+          children: [
+            Expanded(
+              child: _buildTypeCard(
+                  'Wi-Fi', QRType.wifi, 'assets/images/creacte-page/wi-fi.svg'),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -423,14 +456,18 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? Colors.white : const Color(0xFFF5F7FA),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                isSelected ? const Color(0xFFE5E8EF) : const Color(0xFFE9ECF2),
+          ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -439,13 +476,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SvgPicture.asset(
               iconPath,
               width: 20,
               height: 20,
               colorFilter: ColorFilter.mode(
-                isSelected ? const Color(0xFF5A5A5A) : const Color(0xFF5A5A5A),
+                isSelected ? const Color(0xFF111111) : const Color(0xFF777777),
                 BlendMode.srcIn,
               ),
             ),
@@ -453,9 +491,11 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : const Color(0xFF5A5A5A),
+                color: isSelected
+                    ? const Color(0xFF111111)
+                    : const Color(0xFF666666),
                 fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],
@@ -648,7 +688,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: const Color(0xFFE5E8EF)),
       ),
       child: TextField(
         controller: controller,
@@ -659,7 +699,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           labelText: label,
           hintText: hint,
           prefixIcon: icon != null && !showIconOnRight
-              ? Icon(icon, color: Colors.grey[600])
+              ? Icon(icon, color: const Color(0xFF8A8A8A))
               : null,
           suffixIcon: showIconOnRight
               ? IconButton(
@@ -708,30 +748,38 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: const Color(0xFFE5E8EF)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Color section
-              const Text(
-                'Color',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 12),
+              // Color section - label and swatches in one row
               Row(
                 children: [
-                  _buildColorSwatch(Colors.black),
-                  const SizedBox(width: 12),
-                  _buildColorSwatch(const Color(0xFF7ACBFF)), // Light blue
-                  const SizedBox(width: 12),
-                  _buildColorSwatch(const Color(0xFF4CAF50)), // Light green
-                  const SizedBox(width: 12),
-                  _buildColorSwatch(const Color(0xFFFF9800)), // Orange
+                  Text(
+                    'Color',
+                    style: AppStyles.designOptionLabel,
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildColorSwatch(Colors.black),
+                      const SizedBox(width: 12),
+                      _buildColorSwatch(const Color(0xFF7ACBFF)), // Light blue
+                      const SizedBox(width: 12),
+                      _buildColorSwatch(const Color(0xFF4CAF50)), // Light green
+                      const SizedBox(width: 12),
+                      _buildColorSwatch(const Color(0xFFFF9800)), // Orange
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -739,29 +787,13 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     '+ Add Logo',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
+                    style: AppStyles.designOptionLabel,
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Pro Feature',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.orange[700],
-                      ),
-                    ),
+                  Text(
+                    'Pro Feature',
+                    style: AppStyles.proFeatureBadge,
                   ),
                 ],
               ),
@@ -781,15 +813,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         });
       },
       child: Container(
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.transparent,
-            width: 3,
-          ),
+          border: isSelected
+              ? Border.all(color: const Color(0xFF4DA6FF), width: 3)
+              : null,
         ),
       ),
     );
@@ -809,6 +840,13 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           end: Alignment.centerRight,
         ),
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4DA6FF).withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: ElevatedButton(
         onPressed: _generateQR,
@@ -861,7 +899,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       },
     );
   }
-
 
   Widget _buildBottomNavigationBar() {
     return ClipPath(
