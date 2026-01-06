@@ -87,6 +87,9 @@ flutter:
     - assets/images/my_qr_code-page/qr.svg
     - assets/images/my_qr_code-page/dots.svg
     - assets/images/my_qr_code-page/eye.svg
+    - assets/images/my_qr_code-page/menu/shared.svg
+    - assets/images/my_qr_code-page/menu/edit.svg
+    - assets/images/my_qr_code-page/menu/delete.svg
     - assets/images/subscr-page/qr.svg
     - assets/images/subscr-page/inf.svg
     - assets/images/subscr-page/color.svg
