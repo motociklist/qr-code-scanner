@@ -13,6 +13,7 @@ import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/dialog_helper.dart';
+import '../constants/app_styles.dart';
 import 'result_screen.dart';
 
 class MyQRCodesScreen extends StatefulWidget {
@@ -166,98 +167,102 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // White background container for header and filters
+            Container(
+              color: Colors.white,
+              child: Column(
                 children: [
-                  const Text(
-                    'My QR Codes',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'My QR Codes',
+                          style: AppStyles.title3,
+                        ),
+                        IconButton(
+                          icon: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[200],
+                            ),
+                            child: Center(
+                              child: SvgPicture.asset(
+                                'assets/images/my_qr_code-page/search.svg',
+                                width: 12,
+                                height: 12,
+                                fit: BoxFit.contain,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.black,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isSearching = !_isSearching;
+                              if (!_isSearching) {
+                                _searchQuery = '';
+                                _searchController.clear();
+                              }
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    icon: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[200],
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/images/my_qr_code-page/search.svg',
-                          width: 12,
-                          height: 12,
-                          fit: BoxFit.contain,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.black,
-                            BlendMode.srcIn,
+                  // Search bar (if searching)
+                  if (_isSearching)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search QR codes...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                _isSearching = false;
+                                _searchQuery = '';
+                                _searchController.clear();
+                              });
+                            },
                           ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
                       ),
                     ),
-                    onPressed: () {
+                  // Filter tabs
+                  FilterChips(
+                    filters: _filters,
+                    selectedFilter: _selectedFilter,
+                    onFilterChanged: (filter) {
                       setState(() {
-                        _isSearching = !_isSearching;
-                        if (!_isSearching) {
-                          _searchQuery = '';
-                          _searchController.clear();
-                        }
+                        _selectedFilter = filter;
                       });
                     },
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
-            // Search bar (if searching)
-            if (_isSearching)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search QR codes...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        setState(() {
-                          _isSearching = false;
-                          _searchQuery = '';
-                          _searchController.clear();
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
-              ),
-            // Filter tabs
-            FilterChips(
-              filters: _filters,
-              selectedFilter: _selectedFilter,
-              onFilterChanged: (filter) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
             // QR Codes grid
             Expanded(
               child: _filteredCodes.isEmpty
@@ -271,7 +276,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                           : 'Create your first QR code',
                     )
                   : GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -352,11 +357,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                       Expanded(
                         child: Text(
                           code.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
+                          style: AppStyles.cardTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -388,11 +389,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _getSubtitle(code),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal,
-                    ),
+                    style: AppStyles.smallTextGray,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -403,10 +400,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                     children: [
                       Text(
                         DateFormatter.formatDate(code.createdAt),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
+                        style: AppStyles.cardDate,
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,

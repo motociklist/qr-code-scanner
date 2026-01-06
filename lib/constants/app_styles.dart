@@ -64,6 +64,30 @@ class AppStyles {
         color: const Color(0xFFB0B0B0),
       );
 
+  // Small Text Gray - 13px / Regular (400) / Letter Spacing -0.5px / Color #5A5A5A
+  static TextStyle get smallTextGray => GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.5,
+        color: const Color(0xFF5A5A5A),
+      );
+
+  // Card Title - 15px / Semi Bold (600) / Letter Spacing -0.5px / Line Height 23 / Color #111111
+  static TextStyle get cardTitle => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
+  // Card Date - 12px / Regular (400) / Letter Spacing -0.5px / Line Height 18 / Color #B0B0B0
+  static TextStyle get cardDate => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.5,
+        color: const Color(0xFFB0B0B0),
+      );
+
   // Button Text - 17px / Semibold (600)
   static TextStyle get buttonText => GoogleFonts.inter(
         fontSize: 17,
