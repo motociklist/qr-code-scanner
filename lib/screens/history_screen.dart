@@ -10,6 +10,7 @@ import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../utils/qr_type_helper.dart';
 import '../utils/navigation_helper.dart';
+import '../constants/app_styles.dart';
 import 'result_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final HistoryService _historyService = HistoryService();
   String _selectedFilter = 'All';
+  bool _showFilters = true;
 
   @override
   void initState() {
@@ -95,58 +97,71 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // White background container for header and filters
+            Container(
+              color: Colors.white,
+              child: Column(
                 children: [
-                  const Text(
-                    'History',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      // Filter/sort action - can be implemented later
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFF6F7FA),
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/images/history-page/arrow-up.svg',
-                          width: 16,
-                          height: 13,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF666666),
-                            BlendMode.srcIn,
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'History',
+                          style: AppStyles.title3,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showFilters = !_showFilters;
+                            });
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFF6F7FA),
+                            ),
+                            child: Center(
+                              child: Transform.rotate(
+                                angle: _showFilters
+                                    ? 0
+                                    : 3.14159, // 180 degrees in radians
+                                child: SvgPicture.asset(
+                                  'assets/images/history-page/arrow-up.svg',
+                                  width: 16,
+                                  height: 13,
+                                  colorFilter: const ColorFilter.mode(
+                                    Color(0xFF666666),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
+                  // Filter tabs
+                  if (_showFilters) ...[
+                    FilterChips(
+                      filters: const ['All', 'Scanned', 'Created'],
+                      selectedFilter: _selectedFilter,
+                      onFilterChanged: (filter) {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
-            // Filter tabs
-            FilterChips(
-              filters: const ['All', 'Scanned', 'Created'],
-              selectedFilter: _selectedFilter,
-              onFilterChanged: (filter) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
             // History list
             Expanded(
               child: groupedHistory.isEmpty
@@ -161,11 +176,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       itemBuilder: (context, index) {
                         final groupKey = sortedKeys[index];
                         final items = groupedHistory[groupKey]!;
+                        final isTodayOrYesterday =
+                            groupKey == 'Today' || groupKey == 'Yesterday';
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: EdgeInsets.only(bottom: 12, top: index > 0 ? 24 : 0),
+                              padding: EdgeInsets.only(
+                                bottom: isTodayOrYesterday ? 24 : 12,
+                                top: isTodayOrYesterday
+                                    ? 24
+                                    : (index > 0 ? 24 : 0),
+                              ),
                               child: Text(
                                 groupKey,
                                 style: const TextStyle(
@@ -192,7 +214,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final isCreated = item.action == 'Created';
 
     // For QR code (scanned items that are not WIFI, CONTACT, or Created)
-    if (item.action != 'Created' && item.type != 'WIFI' && item.type != 'CONTACT') {
+    if (item.action != 'Created' &&
+        item.type != 'WIFI' &&
+        item.type != 'CONTACT') {
       return Container(
         width: 48,
         height: 48,
@@ -260,30 +284,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      QRTypeHelper.getTitle(item.type, item.code, action: item.action),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                      QRTypeHelper.getTitle(item.type, item.code,
+                          action: item.action),
+                      style: AppStyles.bodyMediumText,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       UrlHelper.truncateText(item.code, maxLength: 30),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: AppStyles.caption,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${item.action} • ${DateFormatter.formatTime(item.timestamp)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[500],
-                      ),
+                      style: AppStyles.smallText,
                     ),
                   ],
                 ),
@@ -296,5 +311,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
   }
-
 }
