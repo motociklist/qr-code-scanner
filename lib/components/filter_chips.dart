@@ -5,19 +5,24 @@ class FilterChips extends StatelessWidget {
   final List<String> filters;
   final String selectedFilter;
   final ValueChanged<String> onFilterChanged;
+  final MainAxisAlignment mainAxisAlignment;
 
   const FilterChips({
     super.key,
     required this.filters,
     required this.selectedFilter,
     required this.onFilterChanged,
+    this.mainAxisAlignment = MainAxisAlignment.center,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        mainAxisAlignment: mainAxisAlignment,
+        mainAxisSize: MainAxisSize.min,
         children: filters.map((filter) {
           final isSelected = selectedFilter == filter;
           return Padding(
