@@ -78,8 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 60), // Space for FAB
                   _buildNavItem('assets/images/nav_menu/my_qr_code.svg',
                       'My QR Codes', 2),
+                  // History uses PNG icon
                   _buildNavItem(
-                      'assets/images/nav_menu/history.svg', 'History', 3),
+                      'assets/images/nav_menu/history-png.png', 'History', 3),
                 ],
               ),
             ),
@@ -118,9 +119,27 @@ class _HomeScreenState extends State<HomeScreen> {
     const activeColor = Color(0xFF7ACBFF); // Light blue from gradient
     const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
+    final bool isSvg = iconPath.toLowerCase().endsWith('.svg');
+    final bool isPng = iconPath.toLowerCase().endsWith('.png');
+
     // Выбираем активную или неактивную версию иконки
-    final String activeIconPath = iconPath.replaceAll('.svg', '-activ.svg');
-    final String finalIconPath = isSelected ? activeIconPath : iconPath;
+    String finalIconPath = iconPath;
+    if (isSelected) {
+      if (isSvg) {
+        finalIconPath = iconPath.replaceFirst('.svg', '-activ.svg');
+      } else if (isPng) {
+        // Пробуем найти активную PNG версию
+        final String activePngPath =
+            iconPath.replaceFirst('.png', '-activ.png');
+        // Если активной PNG нет, используем SVG активную версию (для истории)
+        if (iconPath.contains('history')) {
+          finalIconPath =
+              iconPath.replaceFirst('history-png.png', 'history-activ.svg');
+        } else {
+          finalIconPath = activePngPath;
+        }
+      }
+    }
 
     return Expanded(
       child: GestureDetector(
@@ -142,17 +161,25 @@ class _HomeScreenState extends State<HomeScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
-                SvgPicture.asset(
-                  finalIconPath,
-                  width: 24,
-                  height: 24,
-                  placeholderBuilder: (context) => Container(
+                if (finalIconPath.toLowerCase().endsWith('.svg'))
+                  SvgPicture.asset(
+                    finalIconPath,
                     width: 24,
                     height: 24,
-                    color: Colors.transparent,
+                    placeholderBuilder: (context) => Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.transparent,
+                    ),
+                    semanticsLabel: label,
+                  )
+                else
+                  Image.asset(
+                    finalIconPath,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
                   ),
-                  semanticsLabel: label,
-                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -274,10 +301,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       subtitle: 'Generate new',
                       onTap: () {
                         // Check subscription for creating QR codes
-                        if (!ApphudService.instance.canUseFeature('create_qr')) {
+                        if (!ApphudService.instance
+                            .canUseFeature('create_qr')) {
                           NavigationHelper.push(context, const PricingScreen());
                         } else {
-                          NavigationHelper.push(context, const CreateQRScreen());
+                          NavigationHelper.push(
+                              context, const CreateQRScreen());
                         }
                       },
                     ),
