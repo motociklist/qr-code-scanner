@@ -11,6 +11,7 @@ import '../services/ads_service.dart';
 import '../services/analytics_service.dart';
 import '../services/appsflyer_service.dart';
 import '../utils/navigation_helper.dart';
+import '../widgets/standard_header.dart';
 
 // Helper to check if platform is mobile (only works on mobile)
 bool _isMobile() {
@@ -287,23 +288,14 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   }
 
   Widget _buildTopSection() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          const Text(
-            'Scan QR Code',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Info card
-          Container(
+    return Column(
+      children: [
+        StandardHeader(
+          title: 'Scan QR Code',
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.grey[100],
@@ -348,8 +340,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

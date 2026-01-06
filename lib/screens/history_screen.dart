@@ -11,6 +11,7 @@ import '../utils/url_helper.dart';
 import '../utils/qr_type_helper.dart';
 import '../utils/navigation_helper.dart';
 import '../constants/app_styles.dart';
+import '../widgets/standard_header.dart';
 import 'result_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -103,48 +104,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 children: [
                   // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'History',
-                          style: AppStyles.title3,
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _showFilters = !_showFilters;
-                            });
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFFF6F7FA),
-                            ),
-                            child: Center(
-                              child: Transform.rotate(
-                                angle: _showFilters
-                                    ? 0
-                                    : 3.14159, // 180 degrees in radians
-                                child: SvgPicture.asset(
-                                  'assets/images/history-page/arrow-up.svg',
-                                  width: 16,
-                                  height: 13,
-                                  colorFilter: const ColorFilter.mode(
-                                    Color(0xFF666666),
-                                    BlendMode.srcIn,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  StandardHeader(
+                    title: 'History',
+                    trailing: Transform.rotate(
+                      angle: _showFilters ? 0 : 3.14159, // 180 degrees in radians
+                      child: StandardHeader.createIconButton(
+                        iconPath: 'assets/images/history-page/arrow-up.svg',
+                        iconWidth: 16,
+                        iconHeight: 13,
+                        iconColor: const Color(0xFF666666),
+                      ),
                     ),
+                    onTrailingTap: () {
+                      setState(() {
+                        _showFilters = !_showFilters;
+                      });
+                    },
                   ),
                   // Filter tabs
                   if (_showFilters) ...[
