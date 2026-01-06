@@ -299,7 +299,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   Widget _buildTopSection() {
     return Column(
       children: [
-        StandardHeader(
+        const StandardHeader(
           title: 'Scan QR Code',
         ),
         Padding(
@@ -316,9 +316,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF7ACBFF),
+                    color: Color(0xFF7ACBFF),
                   ),
                   child: Center(
                     child: SvgPicture.asset(
@@ -488,9 +488,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           child: Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFF6F7FA),
+              color: Color(0xFFF6F7FA),
             ),
             child: Center(
               child: SvgPicture.asset(
