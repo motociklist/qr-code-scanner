@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onNavigateToScan: () => _switchToTab(1),
         onNavigateToMyQRCodes: () => _switchToTab(2),
         onNavigateToHistory: () => _switchToTab(3),
+        onNavigateToCreateQR: (context) => _openCreateQRScreen(context),
       ),
       const QRScannerScreen(),
       const MyQRCodesScreen(),
@@ -103,18 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () async {
-              final result = await NavigationHelper.push(
-                context,
-                const CreateQRScreen(),
-              );
-              // Если вернулся индекс таба, переключаемся на него
-              if (result != null && result is int && mounted) {
-                setState(() {
-                  _currentIndex = result;
-                });
-              }
-            },
+            onTap: () => _openCreateQRScreen(context),
             borderRadius: BorderRadius.circular(28),
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
@@ -133,6 +123,19 @@ class _HomeScreenState extends State<HomeScreen> {
       // Даем время для переключения экрана
       Future.delayed(const Duration(milliseconds: 100), () {
         // Экран сканирования сам запустит камеру в didChangeDependencies
+      });
+    }
+  }
+
+  Future<void> _openCreateQRScreen(BuildContext context) async {
+    final result = await NavigationHelper.push(
+      context,
+      const CreateQRScreen(),
+    );
+    // Если вернулся индекс таба, переключаемся на него
+    if (result != null && result is int && mounted) {
+      setState(() {
+        _currentIndex = result;
       });
     }
   }
@@ -214,12 +217,14 @@ class HomeTabScreen extends StatefulWidget {
   final VoidCallback? onNavigateToScan;
   final VoidCallback? onNavigateToMyQRCodes;
   final VoidCallback? onNavigateToHistory;
+  final Future<void> Function(BuildContext)? onNavigateToCreateQR;
 
   const HomeTabScreen({
     super.key,
     this.onNavigateToScan,
     this.onNavigateToMyQRCodes,
     this.onNavigateToHistory,
+    this.onNavigateToCreateQR,
   });
 
   @override
@@ -321,7 +326,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       title: 'Create QR',
                       subtitle: 'Generate new',
                       onTap: () {
-                        NavigationHelper.push(context, const CreateQRScreen());
+                        widget.onNavigateToCreateQR?.call(context);
                       },
                     ),
                     _buildActionCard(
