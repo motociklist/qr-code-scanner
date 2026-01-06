@@ -94,6 +94,7 @@ app.*.map.json
 /android/app/google-services.json
 /android/app/src/main/google-services.json
 /ios/Runner/GoogleService-Info.plist
+/lib/firebase_options.dart
 
 # Android build and generated files
 /android/app/build/
