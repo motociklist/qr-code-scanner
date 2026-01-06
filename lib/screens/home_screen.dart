@@ -126,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNavItem(String iconPath, String label, int index) {
     final isSelected = _currentIndex == index;
-    const activeColor = Color(0xFF7ACBFF); // Light blue from gradient
+    final activeColor = Colors.green[400]!; // Green to match create button
     const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
     final bool isSvg = iconPath.toLowerCase().endsWith('.svg');

@@ -36,7 +36,7 @@ class AppStyles {
   // Body / Paragraph - 17px / Regular (400)
   static TextStyle get body => GoogleFonts.inter(
         fontSize: 17,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w600,
         color: Colors.black,
       );
 
@@ -46,6 +46,14 @@ class AppStyles {
         fontWeight: FontWeight.w500,
         letterSpacing: -0.5,
         color: const Color(0xFF111111),
+      );
+
+  // Button Action Text - 17px / Semi Bold (600) / Letter Spacing -0.5px / Line Height 26
+  static TextStyle get buttonActionText => GoogleFonts.inter(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.5,
+        color: Colors.white,
       );
 
   // Caption / Small - 15px / Medium (500) / Letter Spacing -0.5px / Color #5A5A5A
