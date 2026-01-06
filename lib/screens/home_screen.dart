@@ -33,11 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _currentIndex = widget.initialTabIndex ?? 0;
     _screens = [
-      HomeTabScreen(onNavigateToScan: () {
-        setState(() {
-          _currentIndex = 1;
-        });
-      }),
+      HomeTabScreen(
+        onNavigateToScan: () => _switchToTab(1),
+        onNavigateToMyQRCodes: () => _switchToTab(2),
+        onNavigateToHistory: () => _switchToTab(3),
+      ),
       const QRScannerScreen(),
       const MyQRCodesScreen(),
       const HistoryScreen(),
@@ -124,6 +124,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _switchToTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    // Если переключаемся на экран сканирования, убеждаемся что камера запущена
+    if (index == 1) {
+      // Даем время для переключения экрана
+      Future.delayed(const Duration(milliseconds: 100), () {
+        // Экран сканирования сам запустит камеру в didChangeDependencies
+      });
+    }
+  }
+
   Widget _buildNavItem(String iconPath, String label, int index) {
     final isSelected = _currentIndex == index;
     final activeColor = Colors.green[400]!; // Green to match create button
@@ -154,16 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            _currentIndex = index;
-          });
-          // Если переключаемся на экран сканирования, убеждаемся что камера запущена
-          if (index == 1) {
-            // Даем время для переключения экрана
-            Future.delayed(const Duration(milliseconds: 100), () {
-              // Экран сканирования сам запустит камеру в didChangeDependencies
-            });
-          }
+          _switchToTab(index);
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -208,8 +212,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class HomeTabScreen extends StatefulWidget {
   final VoidCallback? onNavigateToScan;
+  final VoidCallback? onNavigateToMyQRCodes;
+  final VoidCallback? onNavigateToHistory;
 
-  const HomeTabScreen({super.key, this.onNavigateToScan});
+  const HomeTabScreen({
+    super.key,
+    this.onNavigateToScan,
+    this.onNavigateToMyQRCodes,
+    this.onNavigateToHistory,
+  });
 
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
@@ -319,8 +330,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: const Color(0xFFFFB86C), // Bright orange
                       title: 'My QR Codes',
                       subtitle: 'Saved codes',
-                      onTap: () => NavigationHelper.push(
-                          context, const MyQRCodesScreen()),
+                      onTap: () {
+                        widget.onNavigateToMyQRCodes?.call();
+                      },
                     ),
                     _buildActionCard(
                       context,
@@ -328,8 +340,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: const Color(0xFFB0B0B0), // Grey
                       title: 'History',
                       subtitle: 'Recent scans',
-                      onTap: () =>
-                          NavigationHelper.push(context, const HistoryScreen()),
+                      onTap: () {
+                        widget.onNavigateToHistory?.call();
+                      },
                     ),
                   ],
                 ),
