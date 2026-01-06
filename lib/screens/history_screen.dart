@@ -148,14 +148,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                   // Filter tabs
                   if (_showFilters) ...[
-                    FilterChips(
-                      filters: const ['All', 'Scanned', 'Created'],
-                      selectedFilter: _selectedFilter,
-                      onFilterChanged: (filter) {
-                        setState(() {
-                          _selectedFilter = filter;
-                        });
-                      },
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilterChips(
+                        filters: const ['All', 'Scanned', 'Created'],
+                        selectedFilter: _selectedFilter,
+                        onFilterChanged: (filter) {
+                          setState(() {
+                            _selectedFilter = filter;
+                          });
+                        },
+                        mainAxisAlignment: MainAxisAlignment.start,
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
