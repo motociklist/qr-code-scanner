@@ -9,18 +9,14 @@ import '../constants/app_styles.dart';
 import 'qr_result_screen.dart';
 import '../utils/navigation_helper.dart';
 import 'pricing_screen.dart';
-
-enum QRType {
-  url,
-  text,
-  phone,
-  email,
-  contact,
-  wifi,
-}
+import '../models/saved_qr_code.dart';
+import '../services/saved_qr_service.dart';
+import '../utils/qr_parser.dart';
 
 class CreateQRScreen extends StatefulWidget {
-  const CreateQRScreen({super.key});
+  final SavedQRCode? editingCode;
+
+  const CreateQRScreen({super.key, this.editingCode});
 
   @override
   State<CreateQRScreen> createState() => _CreateQRScreenState();
@@ -35,7 +31,58 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   void initState() {
     super.initState();
     _initializeControllers();
+    if (widget.editingCode != null) {
+      _loadEditingCode();
+    }
     AnalyticsService.instance.logScreenView('create_qr_screen');
+  }
+
+  void _loadEditingCode() {
+    final code = widget.editingCode!;
+    final content = code.content;
+
+    // Определяем тип QR кода
+    final qrType = QRParser.detectType(content);
+    _selectedType = qrType;
+
+    // Заполняем поля в зависимости от типа
+    switch (qrType) {
+      case QRType.url:
+        _controllers[QRType.url]!['url']!.text = content;
+        break;
+      case QRType.text:
+        _controllers[QRType.text]!['text']!.text = content;
+        break;
+      case QRType.phone:
+        final phone = QRParser.parsePhone(content);
+        _controllers[QRType.phone]!['phone']!.text = phone;
+        break;
+      case QRType.email:
+        final emailData = QRParser.parseEmail(content);
+        _controllers[QRType.email]!['email']!.text = emailData['email'] ?? '';
+        _controllers[QRType.email]!['subject']!.text = emailData['subject'] ?? '';
+        _controllers[QRType.email]!['body']!.text = emailData['body'] ?? '';
+        break;
+      case QRType.contact:
+        final contactData = QRParser.parseContact(content);
+        _controllers[QRType.contact]!['name']!.text = contactData['name'] ?? '';
+        _controllers[QRType.contact]!['phone']!.text = contactData['phone'] ?? '';
+        _controllers[QRType.contact]!['email']!.text = contactData['email'] ?? '';
+        _controllers[QRType.contact]!['organization']!.text = contactData['organization'] ?? '';
+        _controllers[QRType.contact]!['address']!.text = contactData['address'] ?? '';
+        break;
+      case QRType.wifi:
+        final wifiData = QRParser.parseWiFi(content);
+        _controllers[QRType.wifi]!['ssid']!.text = wifiData['S'] ?? '';
+        _controllers[QRType.wifi]!['password']!.text = wifiData['P'] ?? '';
+        _controllers[QRType.wifi]!['security']!.text = wifiData['T'] ?? 'WPA';
+        break;
+      case QRType.sms:
+        // SMS не поддерживается в CreateQRScreen, оставляем как text
+        _selectedType = QRType.text;
+        _controllers[QRType.text]!['text']!.text = content;
+        break;
+    }
   }
 
   void _initializeControllers() {
@@ -109,6 +156,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         return _buildVCard();
       case QRType.wifi:
         return _buildWiFiString();
+      case QRType.sms:
+        // SMS не поддерживается, обрабатываем как text
+        return _controllers[QRType.text]!['text']!.text.trim();
     }
   }
 
@@ -140,7 +190,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     return 'WIFI:T:$security;S:$ssid;P:$password;;';
   }
 
-  void _generateQR() {
+  void _generateQR() async {
     final data = _buildQRData();
     if (data.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -153,6 +203,25 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     if (!ApphudService.instance.canUseFeature('create_qr')) {
       _showSubscriptionRequired();
       AppsFlyerService.instance.logEvent('create_qr_blocked');
+      return;
+    }
+
+    // Если редактируем существующий код, обновляем его
+    if (widget.editingCode != null) {
+      final updatedCode = widget.editingCode!.copyWith(
+        title: _getTitleForType(),
+        content: data,
+        type: _getTypeString(),
+      );
+
+      await SavedQRService.instance.updateCode(updatedCode);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('QR code updated successfully')),
+        );
+        Navigator.pop(context);
+      }
       return;
     }
 
@@ -217,6 +286,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             : _controllers[QRType.contact]!['name']!.text.trim();
       case QRType.wifi:
         return _controllers[QRType.wifi]!['ssid']!.text.trim();
+      case QRType.sms:
+        return 'Text QR Code';
     }
   }
 
@@ -234,6 +305,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         return 'Contact';
       case QRType.wifi:
         return 'WiFi';
+      case QRType.sms:
+        return 'Text';
     }
   }
 
@@ -284,11 +357,11 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Create QR Code',
+              widget.editingCode != null ? 'Edit QR Code' : 'Create QR Code',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -547,6 +620,17 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             options: ['WPA', 'WEP', 'nopass'],
           ),
         ];
+      case QRType.sms:
+        // SMS не поддерживается, обрабатываем как text
+        return [
+          _buildTextField(
+            controller: _controllers[QRType.text]!['text']!,
+            label: 'Text',
+            hint: 'Enter your text',
+            icon: Icons.text_fields,
+            maxLines: 5,
+          ),
+        ];
     }
   }
 
@@ -735,9 +819,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          'Generate QR Code',
-          style: TextStyle(
+        child: Text(
+          widget.editingCode != null ? 'Update QR Code' : 'Generate QR Code',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.bold,
