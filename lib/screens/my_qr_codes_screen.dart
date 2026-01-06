@@ -14,6 +14,7 @@ import '../utils/url_helper.dart';
 import '../utils/dialog_helper.dart';
 import '../constants/app_styles.dart';
 import '../utils/navigation_helper.dart';
+import '../widgets/standard_header.dart';
 import 'create_qr_screen.dart';
 
 class MyQRCodesScreen extends StatefulWidget {
@@ -268,48 +269,22 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
               child: Column(
                 children: [
                   // Header
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'My QR Codes',
-                          style: AppStyles.title3,
-                        ),
-                        IconButton(
-                          icon: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.grey[200],
-                            ),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                'assets/images/my_qr_code-page/search.svg',
-                                width: 12,
-                                height: 12,
-                                fit: BoxFit.contain,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.black,
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isSearching = !_isSearching;
-                              if (!_isSearching) {
-                                _searchQuery = '';
-                                _searchController.clear();
-                              }
-                            });
-                          },
-                        ),
-                      ],
+                  StandardHeader(
+                    title: 'My QR Codes',
+                    trailing: StandardHeader.createIconButton(
+                      iconPath: 'assets/images/my_qr_code-page/search.svg',
+                      iconWidth: 12,
+                      iconHeight: 12,
                     ),
+                    onTrailingTap: () {
+                      setState(() {
+                        _isSearching = !_isSearching;
+                        if (!_isSearching) {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        }
+                      });
+                    },
                   ),
                   // Search bar (if searching)
                   if (_isSearching)

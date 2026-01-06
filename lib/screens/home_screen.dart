@@ -102,7 +102,18 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => NavigationHelper.push(context, const CreateQRScreen()),
+            onTap: () async {
+              final result = await NavigationHelper.push(
+                context,
+                const CreateQRScreen(),
+              );
+              // Если вернулся индекс таба, переключаемся на него
+              if (result != null && result is int && mounted) {
+                setState(() {
+                  _currentIndex = result;
+                });
+              }
+            },
             borderRadius: BorderRadius.circular(28),
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),

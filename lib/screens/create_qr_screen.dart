@@ -6,6 +6,7 @@ import '../services/analytics_service.dart';
 import '../services/ads_service.dart';
 import '../services/appsflyer_service.dart';
 import '../constants/app_styles.dart';
+import '../widgets/standard_header.dart';
 import 'qr_result_screen.dart';
 import '../utils/navigation_helper.dart';
 import 'pricing_screen.dart';
@@ -355,53 +356,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return StandardHeader(
+      title: widget.editingCode != null ? 'Edit QR Code' : 'Create QR Code',
+      trailing: StandardHeader.createIconButton(
+        iconPath: 'assets/images/creacte-page/cross.svg',
+        iconWidth: 12,
+        iconHeight: 12,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            widget.editingCode != null ? 'Edit QR Code' : 'Create QR Code',
-            style: AppStyles.title3,
-          ),
-          InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(18),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: SvgPicture.asset(
-                  'assets/images/creacte-page/cross.svg',
-                  width: 12,
-                  height: 12,
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
+      onTrailingTap: () => Navigator.pop(context),
     );
   }
 
@@ -926,8 +888,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
                 const SizedBox(width: 60), // Space for FAB
                 _buildNavItem(
                     'assets/images/nav_menu/my_qr_code.svg', 'My QR Codes', 2),
+                // History uses PNG icon
                 _buildNavItem(
-                    'assets/images/nav_menu/history.svg', 'History', 3),
+                    'assets/images/nav_menu/history-png.png', 'History', 3),
               ],
             ),
           ),
@@ -939,11 +902,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   Widget _buildNavItem(String iconPath, String label, int index) {
     const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
+    final bool isSvg = iconPath.toLowerCase().endsWith('.svg');
+    final bool isPng = iconPath.toLowerCase().endsWith('.png');
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // Просто закрываем CreateQRScreen, пользователь вернется на HomeScreen
-          Navigator.pop(context);
+          // Закрываем CreateQRScreen и возвращаем индекс таба для перехода
+          Navigator.pop(context, index);
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -951,17 +917,25 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
-                SvgPicture.asset(
-                  iconPath,
-                  width: 24,
-                  height: 24,
-                  placeholderBuilder: (context) => Container(
+                if (isSvg)
+                  SvgPicture.asset(
+                    iconPath,
                     width: 24,
                     height: 24,
-                    color: Colors.transparent,
+                    placeholderBuilder: (context) => Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.transparent,
+                    ),
+                    semanticsLabel: label,
+                  )
+                else if (isPng)
+                  Image.asset(
+                    iconPath,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
                   ),
-                  semanticsLabel: label,
-                ),
               ],
             ),
             const SizedBox(height: 4),
