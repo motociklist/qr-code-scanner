@@ -2,6 +2,7 @@ import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
@@ -271,17 +272,25 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF6F7FA),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top section with title and info card
-            _buildTopSection(),
-            // Scanning area
-            Expanded(child: _buildScanningArea()),
-            // Bottom controls
-            _buildBottomControls(),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Top section with title and info card
+              _buildTopSection(),
+              // Spacing between top section and scanner
+              const SizedBox(height: 40),
+              // Scanning area
+              _buildScanningArea(),
+              // Spacing between scanner and bottom controls
+              const SizedBox(height: 40),
+              // Bottom controls
+              _buildBottomControls(),
+              // Spacing between bottom controls and nav menu
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
@@ -294,32 +303,40 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           title: 'Scan QR Code',
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
           child: Container(
+            height: 76,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.blue[100],
+                    color: const Color(0xFF7ACBFF),
                   ),
-                  child: const Icon(
-                    Icons.info_outline,
-                    color: Colors.blue,
-                    size: 20,
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/images/scan-qr-page/i.svg',
+                      width: 6,
+                      height: 13,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
                         'Align QR code within frame',
@@ -362,9 +379,10 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+    return Center(
       child: Container(
+        width: 280,
+        height: 280,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -418,30 +436,36 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   Widget _buildBottomControls() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildControlButton(
-            icon: Icons.flash_on,
+            iconPath: 'assets/images/scan-qr-page/flash.svg',
             label: 'Flash',
             onPressed: _toggleTorch,
             isActive: _isTorchOn,
+            iconWidth: 14,
+            iconHeight: 18,
           ),
           _buildControlButton(
-            icon: Icons.cameraswitch,
+            iconPath: 'assets/images/scan-qr-page/switch.svg',
             label: 'Switch',
             onPressed: _switchCamera,
+            iconWidth: 18,
+            iconHeight: 16,
           ),
           _buildControlButton(
-            icon: Icons.photo_library_outlined,
+            iconPath: 'assets/images/scan-qr-page/gallery.svg',
             label: 'Gallery',
             onPressed: _pickImageFromGallery,
+            iconWidth: 18,
+            iconHeight: 16,
           ),
         ],
       ),
@@ -449,28 +473,36 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   }
 
   Widget _buildControlButton({
-    required IconData icon,
+    required String iconPath,
     required String label,
     required VoidCallback onPressed,
     bool isActive = false,
+    double? iconWidth,
+    double? iconHeight,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? Colors.blue[100] : Colors.white,
-          ),
-          child: IconButton(
-            icon: Icon(
-              icon,
-              color: isActive ? Colors.blue : Colors.grey[700],
-              size: 28,
+        GestureDetector(
+          onTap: onPressed,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFF6F7FA),
             ),
-            onPressed: onPressed,
+            child: Center(
+              child: SvgPicture.asset(
+                iconPath,
+                width: iconWidth ?? 24,
+                height: iconHeight ?? 24,
+                colorFilter: ColorFilter.mode(
+                  isActive ? const Color(0xFF7ACBFF) : const Color(0xFF5A5A5A),
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 8),

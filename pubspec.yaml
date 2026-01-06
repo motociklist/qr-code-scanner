@@ -102,4 +102,8 @@ flutter:
     - assets/images/history-page/shared.svg
     - assets/images/history-page/qr.svg
     - assets/images/history-page/arrow-up.svg
+    - assets/images/scan-qr-page/flash.svg
+    - assets/images/scan-qr-page/gallery.svg
+    - assets/images/scan-qr-page/switch.svg
+    - assets/images/scan-qr-page/i.svg
 
