@@ -552,10 +552,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Widget _buildIconWidget(ScanHistoryItem item) {
     final backgroundColor = QRTypeHelper.getIconColor(item.type, item.action);
 
-    // For QR code (scanned items that are not WIFI, CONTACT, or Created)
-    if (item.action != 'Created' &&
-        item.type != 'WIFI' &&
-        item.type != 'CONTACT') {
+    // For Shared action, use shared icon
+    if (item.action == 'Shared') {
       return Container(
         width: 48,
         height: 48,
@@ -565,7 +563,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         ),
         child: Center(
           child: SvgPicture.asset(
-            'assets/images/history-page/qr.svg',
+            'assets/images/history-page/shared.svg',
             width: 16,
             height: 16,
             colorFilter: const ColorFilter.mode(
@@ -600,6 +598,31 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               Icons.add,
               color: Colors.white,
               size: 24,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For QR code (scanned items that are not WIFI, CONTACT, or Created)
+    if (item.action != 'Created' &&
+        item.type != 'WIFI' &&
+        item.type != 'CONTACT') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/qr.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
             ),
           ),
         ),
