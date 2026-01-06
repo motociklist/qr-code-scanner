@@ -107,7 +107,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   StandardHeader(
                     title: 'History',
                     trailing: Transform.rotate(
-                      angle: _showFilters ? 0 : 3.14159, // 180 degrees in radians
+                      angle:
+                          _showFilters ? 0 : 3.14159, // 180 degrees in radians
                       child: StandardHeader.createIconButton(
                         iconPath: 'assets/images/history-page/arrow-up.svg',
                         iconWidth: 16,
@@ -190,7 +191,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildIconWidget(ScanHistoryItem item) {
     final backgroundColor = QRTypeHelper.getIconColor(item.type, item.action);
-    final isCreated = item.action == 'Created';
 
     // For QR code (scanned items that are not WIFI, CONTACT, or Created)
     if (item.action != 'Created' &&
@@ -217,12 +217,41 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
-    // For other icons (plus, etc.)
+    // For Created action, use SVG add icon
+    if (item.action == 'Created') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/nav_menu/add.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+            placeholderBuilder: (context) => const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For other icons (share, etc.)
     return IconCircle(
       icon: QRTypeHelper.getIcon(item.type, item.action),
       backgroundColor: backgroundColor,
       iconColor: Colors.white,
-      iconSize: isCreated ? 15 : 16,
+      iconSize: 16,
     );
   }
 

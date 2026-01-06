@@ -9,7 +9,8 @@ import '../models/scan_history_item.dart';
 import 'result_screen.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/date_formatter.dart';
-import '../utils/url_helper.dart';
+import '../utils/qr_type_helper.dart';
+import '../components/icon_circle.dart';
 import '../constants/app_styles.dart';
 import '../constants/app_colors.dart';
 
@@ -459,38 +460,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   }
 
   Widget _buildRecentActivityItem(BuildContext context, ScanHistoryItem item) {
-    final isUrl = UrlHelper.isUrl(item.code);
-    final isCreated = item.action == 'Created';
-    final isShared = item.action == 'Shared';
-    final isWifi = item.type == 'WIFI';
-    final isContact = item.type == 'CONTACT';
-
-    // Определяем иконку и цвет в зависимости от типа активности
-    String iconPath;
-    Color iconColor;
-    String activityText;
-
-    if (isCreated && isWifi) {
-      iconPath = 'assets/images/home-page/plus.svg';
-      iconColor = const Color(0xFF77C97E); // Bright green
-      activityText = 'Created WiFi QR';
-    } else if ((isCreated || isShared) && isContact) {
-      iconPath = 'assets/images/home-page/shared.svg';
-      iconColor = const Color(0xFFFFB86C); // Bright orange
-      activityText = 'Shared contact QR';
-    } else if (isShared) {
-      iconPath = 'assets/images/home-page/shared.svg';
-      iconColor = const Color(0xFFFFB86C); // Bright orange
-      activityText = 'Shared QR code';
-    } else if (isUrl) {
-      iconPath = 'assets/images/home-page/link.svg';
-      iconColor = const Color(0xFF7ACBFF); // Bright blue
-      activityText = 'Scanned website link';
-    } else {
-      iconPath = 'assets/images/home-page/link.svg';
-      iconColor = const Color(0xFF7ACBFF); // Bright blue
-      activityText = 'Scanned QR code';
-    }
+    // Используем ту же логику, что и в HistoryScreen
+    final activityText =
+        QRTypeHelper.getTitle(item.type, item.code, action: item.action);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -521,30 +493,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: iconColor,
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      iconPath,
-                      width: 12,
-                      height: 12,
-                      colorFilter: ColorFilter.mode(
-                        AppTheme.colors.strokeColor,
-                        BlendMode.srcIn,
-                      ),
-                      placeholderBuilder: (context) => Container(
-                        width: 12,
-                        height: 12,
-                        color: Colors.transparent,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildIconWidget(item),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -579,6 +528,73 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildIconWidget(ScanHistoryItem item) {
+    final backgroundColor = QRTypeHelper.getIconColor(item.type, item.action);
+
+    // For QR code (scanned items that are not WIFI, CONTACT, or Created)
+    if (item.action != 'Created' &&
+        item.type != 'WIFI' &&
+        item.type != 'CONTACT') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/qr.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For Created action, use SVG add icon
+    if (item.action == 'Created') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/nav_menu/add.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+            placeholderBuilder: (context) => const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For other icons (share, etc.)
+    return IconCircle(
+      icon: QRTypeHelper.getIcon(item.type, item.action),
+      backgroundColor: backgroundColor,
+      iconColor: Colors.white,
+      iconSize: 16,
+      size: 48,
     );
   }
 }
