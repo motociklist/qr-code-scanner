@@ -119,88 +119,100 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Page content
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index], index == 0, index);
-                },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE8F7FF), // Light blue at 0%
+              Color(0xFFFFFFFF), // White at 100%
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Page content
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  itemCount: _pages.length,
+                  itemBuilder: (context, index) {
+                    return _buildPage(_pages[index], index == 0, index);
+                  },
+                ),
               ),
-            ),
-            // Progress indicator
-            _buildProgressIndicator(),
-            const SizedBox(height: 20),
-            // Next/Get Started button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF7ACBFF), // 0% - light blue
-                        Color(0xFF4DA6FF), // 100% - darker blue
+              // Progress indicator
+              _buildProgressIndicator(),
+              const SizedBox(height: 20),
+              // Next/Get Started button
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF7ACBFF), // 0% - light blue
+                          Color(0xFF4DA6FF), // 100% - darker blue
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4DA6FF).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF4DA6FF).withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                    child: ElevatedButton(
+                      onPressed: _nextPage,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                       ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: _nextPage,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                    ),
-                    child: Text(
-                      _currentPage == _pages.length - 1
-                          ? 'Get Started'
-                          : 'Next',
-                      style: AppStyles.body.copyWith(
-                        color: Colors.white,
+                      child: Text(
+                        _currentPage == _pages.length - 1
+                            ? 'Get Started'
+                            : 'Next',
+                        style: AppStyles.body.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Skip button at bottom (hidden on last page)r
+              // Skip button at bottom (hidden on last page)r
 
-            Padding(
-              padding: const EdgeInsets.only(bottom: 50),
-              child: TextButton(
-                onPressed: _skipOnboarding,
-                child: Text(
-                  'Skip',
-                  style: AppStyles.body.copyWith(
-                    color: Colors.black,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 50),
+                child: TextButton(
+                  onPressed: _skipOnboarding,
+                  child: Text(
+                    'Skip',
+                    style: AppStyles.body.copyWith(
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
