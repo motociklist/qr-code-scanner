@@ -106,14 +106,9 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 12),
                     // Tagline below "QR Master"
-                    const Text(
+                    Text(
                       'Scan • Create • Manage',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF666666),
-                        letterSpacing: 0.5,
-                      ),
+                      style: AppStyles.bodyRegular,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 50),
@@ -121,23 +116,16 @@ class _SplashScreenState extends State<SplashScreen>
                     _buildLoadingIndicator(),
                     const SizedBox(height: 12),
                     // Loading text
-                    const Text(
+                    Text(
                       'Loading...',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF999999),
-                      ),
+                      style: AppStyles.loadingText,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
                     // Version info below Loading...
-                    const Text(
+                    Text(
                       'Version 1.0.0',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: AppStyles.smallText,
                       textAlign: TextAlign.center,
                     ),
                   ],

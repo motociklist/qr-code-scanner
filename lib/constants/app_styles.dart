@@ -4,11 +4,21 @@ import 'package:google_fonts/google_fonts.dart';
 class AppStyles {
   // Typography styles based on design system
 
-  // Large Title - 34px / Bold (700)
+  // Large Title - 34px / Bold (700) / Line Height 51 / Letter Spacing -0.5px / Color #111111
   static TextStyle get largeTitle => GoogleFonts.inter(
         fontSize: 34,
         fontWeight: FontWeight.w700,
-        color: Colors.black,
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
+  // Onboarding Title - 36px / Bold (700) / Line Height 43 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get onboardingTitle => GoogleFonts.inter(
+        fontSize: 36,
+        fontWeight: FontWeight.w700,
+        height: 43 / 36, // Line height 43px for font size 36px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
       );
 
   // Title 1 - 28px / Bold (700)
@@ -18,11 +28,38 @@ class AppStyles {
         color: Colors.black,
       );
 
+  // Home Welcome Title - 28px / Bold (700) / Line Height 42 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get homeWelcomeTitle => GoogleFonts.inter(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 42 / 28, // Line height 42px for font size 28px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
   // Title 2 - 22px / Semibold (600)
   static TextStyle get title2 => GoogleFonts.inter(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: Colors.black,
+      );
+
+  // Onboarding Subtitle - 24px / Semi Bold (600) / Line Height 35 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get onboardingSubtitle => GoogleFonts.inter(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        height: 35 / 24, // Line height 35px for font size 24px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
+  // Onboarding Description - 16px / Regular (400) / Line Height 21 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get onboardingDescription => GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 21 / 16, // Line height 21px for font size 16px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
       );
 
   // Title 3 - 22px / Semibold (600) / Letter Spacing -0.5px / Color #111111
@@ -48,6 +85,14 @@ class AppStyles {
         color: const Color(0xFF111111),
       );
 
+  // Body Regular - 17px / Regular (400) / Letter Spacing -0.5px / Line Height 26 / Color #5A5A5A
+  static TextStyle get bodyRegular => GoogleFonts.inter(
+        fontSize: 17,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.5,
+        color: const Color(0xFF5A5A5A),
+      );
+
   // Button Action Text - 17px / Semi Bold (600) / Letter Spacing -0.5px / Line Height 26
   static TextStyle get buttonActionText => GoogleFonts.inter(
         fontSize: 17,
@@ -64,10 +109,29 @@ class AppStyles {
         color: const Color(0xFF5A5A5A),
       );
 
+  // Home Subtitle - 15px / Regular (400) / Line Height 23 / Letter Spacing -0.5px / Color #5A5A5A
+  static TextStyle get homeSubtitle => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        height: 23 / 15, // Line height 23px for font size 15px
+        letterSpacing: -0.5,
+        color: const Color(0xFF5A5A5A),
+      );
+
+  // Loading Text - 15px / Regular (400) / Line Height 23 / Letter Spacing -0.5px / Color #5A5A5A
+  static TextStyle get loadingText => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        height: 23 / 15, // Line height 23px for font size 15px
+        letterSpacing: -0.5,
+        color: const Color(0xFF5A5A5A),
+      );
+
   // Small Text - 13px / Regular (400) / Letter Spacing -0.5px / Line Height 20 / Color #B0B0B0
   static TextStyle get smallText => GoogleFonts.inter(
         fontSize: 13,
         fontWeight: FontWeight.w400,
+        height: 20 / 13, // Line height 20px for font size 13px
         letterSpacing: -0.5,
         color: const Color(0xFFB0B0B0),
       );

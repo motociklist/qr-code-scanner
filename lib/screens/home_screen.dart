@@ -48,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F7FA), // Background color from photo
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -273,83 +274,109 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     final recentHistory = _historyService.history.take(3).toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF6F7FA), // Background color from photo
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
                 // Welcome section
-                const Text(
+                Text(
                   'Welcome, Name!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                  style: AppStyles.homeWelcomeTitle,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Manage your QR codes easily',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
+                  style: AppStyles.homeSubtitle,
                 ),
                 const SizedBox(height: 32),
-                // Action Cards Grid (2x2)
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.1,
-                  children: [
-                    _buildActionCard(
-                      context,
-                      iconPath: 'assets/images/nav_menu/scan-activ.svg',
-                      iconColor: const Color(0xFF7ACBFF), // Bright blue
-                      title: 'Scan QR',
-                      subtitle: 'Quick scan',
-                      onTap: () {
-                        widget.onNavigateToScan?.call();
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
-                      iconPath: 'assets/images/nav_menu/plus.svg',
-                      iconColor: const Color(0xFF77C97E), // Bright green
-                      title: 'Create QR',
-                      subtitle: 'Generate new',
-                      onTap: () {
-                        widget.onNavigateToCreateQR?.call(context);
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
-                      iconPath: 'assets/images/nav_menu/my_qr_code-activ.svg',
-                      iconColor: const Color(0xFFFFB86C), // Bright orange
-                      title: 'My QR Codes',
-                      subtitle: 'Saved codes',
-                      onTap: () {
-                        widget.onNavigateToMyQRCodes?.call();
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
-                      iconPath: 'assets/images/nav_menu/history-activ.svg',
-                      iconColor: const Color(0xFFB0B0B0), // Grey
-                      title: 'History',
-                      subtitle: 'Recent scans',
-                      onTap: () {
-                        widget.onNavigateToHistory?.call();
-                      },
-                    ),
-                  ],
+                // Action Cards Grid (2x2) - width 40% of screen, height adapts to content
+                Builder(
+                  builder: (context) {
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final cardWidth = screenWidth * 0.4; // 40% of screen width
+                    final availableWidth =
+                        screenWidth - 20; // Subtract padding (24px * 2)
+                    final spacing = (availableWidth - (cardWidth * 2)) /
+                        3; // Spacing between cards
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: cardWidth,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildActionCard(
+                                context,
+                                iconPath:
+                                    'assets/images/nav_menu/scan-activ.svg',
+                                iconColor:
+                                    const Color(0xFF7ACBFF), // Bright blue
+                                title: 'Scan QR',
+                                subtitle: 'Quick scan',
+                                onTap: () {
+                                  widget.onNavigateToScan?.call();
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildActionCard(
+                                context,
+                                iconPath:
+                                    'assets/images/nav_menu/my_qr_code-activ.svg',
+                                iconColor:
+                                    const Color(0xFFFFB86C), // Bright orange
+                                title: 'My QR Codes',
+                                subtitle: 'Saved codes',
+                                onTap: () {
+                                  widget.onNavigateToMyQRCodes?.call();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: spacing),
+                        SizedBox(
+                          width: cardWidth,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildActionCard(
+                                context,
+                                iconPath: 'assets/images/nav_menu/plus.svg',
+                                iconColor:
+                                    const Color(0xFF77C97E), // Bright green
+                                title: 'Create QR',
+                                subtitle: 'Generate new',
+                                onTap: () {
+                                  widget.onNavigateToCreateQR?.call(context);
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildActionCard(
+                                context,
+                                iconPath:
+                                    'assets/images/nav_menu/history-activ.svg',
+                                iconColor: const Color(0xFFB0B0B0), // Grey
+                                title: 'History',
+                                subtitle: 'Recent scans',
+                                onTap: () {
+                                  widget.onNavigateToHistory?.call();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 32),
                 // Recent Activity section
@@ -400,6 +427,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     required VoidCallback onTap,
   }) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
