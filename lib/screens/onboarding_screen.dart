@@ -219,61 +219,102 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   Widget _buildPage(OnboardingPage page, bool isFirstPage, int pageIndex) {
-    return ScrollConfiguration(
-      behavior: _NoScrollbarScrollBehavior(),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(
-            top: 90.0,
-            left: 24.0,
-            right: 24.0,
-            bottom: 24.0,
+    final MediaQueryData mediaQuery = MediaQuery.of(context);
+    final double screenHeight = mediaQuery.size.height;
+    // Calculate height to position subtitle at 60% of screen height from top
+    final double subtitleOffset = screenHeight * 0.6;
+
+    return Stack(
+      children: [
+        // Main content with normal flow - title and illustration at their original positions
+        ScrollConfiguration(
+          behavior: _NoScrollbarScrollBehavior(),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: screenHeight * 0.1, // 10% of screen height
+                left: 24.0,
+                right: 24.0,
+                bottom: 24.0,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Title first for all pages
+                  Text(
+                    page.title,
+                    style: AppStyles.onboardingTitle,
+                    textAlign: TextAlign.center,
+                  ),
+                  // Illustration
+                  _buildIllustration(page, isFirstPage),
+                ],
+              ),
+            ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Title first for all pages
-              Text(
-                page.title,
-                style: AppStyles.largeTitle,
+        ),
+        // Subtitle and Description with dynamic height measurement
+        _buildSubtitleWithDescription(
+          page: page,
+          subtitleOffset: subtitleOffset,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubtitleWithDescription({
+    required OnboardingPage page,
+    required double subtitleOffset,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final subtitleWidth = screenWidth - 48; // 24px left + 24px right
+
+        // Measure subtitle height
+        final subtitleTextPainter = TextPainter(
+          text: TextSpan(
+            text: page.subtitle,
+            style: AppStyles.onboardingSubtitle,
+          ),
+          textDirection: TextDirection.ltr,
+          textAlign: TextAlign.center,
+          maxLines: null,
+        );
+        subtitleTextPainter.layout(maxWidth: subtitleWidth);
+
+        final subtitleHeight = subtitleTextPainter.height;
+
+        return Stack(
+          children: [
+            // Subtitle - fixed position at 490px from top
+            Positioned(
+              top: subtitleOffset,
+              left: 24,
+              right: 24,
+              child: Text(
+                page.subtitle,
+                style: AppStyles.onboardingSubtitle,
                 textAlign: TextAlign.center,
               ),
-              // Illustration
-              _buildIllustration(page, isFirstPage),
-              // Subtitle
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 1.0, // 24 (parent) + 1 = 25px from edge
-                ),
+            ),
+            // Description - dynamic position based on actual subtitle height
+            if (page.description.isNotEmpty)
+              Positioned(
+                top: subtitleOffset +
+                    subtitleHeight +
+                    10, // actual subtitle height + 10px gap
+                left: 25,
+                right: 25,
                 child: Text(
-                  page.subtitle,
-                  style: AppStyles.title2,
+                  page.description,
+                  style: AppStyles.onboardingDescription,
                   textAlign: TextAlign.center,
                 ),
               ),
-              if (page.description.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                // Description
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30.0, // 24 (parent) + 21 = 45px from edge
-                  ),
-                  child: Text(
-                    page.description,
-                    style: AppStyles.body.copyWith(
-                      fontSize: 16,
-                      height: 21 / 16, // line height 21 for font size 16
-                      letterSpacing: -0.5,
-                      color: const Color(0xFF111111),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
   }
 

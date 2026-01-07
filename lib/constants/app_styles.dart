@@ -12,6 +12,15 @@ class AppStyles {
         color: const Color(0xFF111111),
       );
 
+  // Onboarding Title - 36px / Bold (700) / Line Height 43 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get onboardingTitle => GoogleFonts.inter(
+        fontSize: 36,
+        fontWeight: FontWeight.w700,
+        height: 43 / 36, // Line height 43px for font size 36px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
   // Title 1 - 28px / Bold (700)
   static TextStyle get title1 => GoogleFonts.inter(
         fontSize: 28,
@@ -24,6 +33,24 @@ class AppStyles {
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: Colors.black,
+      );
+
+  // Onboarding Subtitle - 24px / Semi Bold (600) / Line Height 35 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get onboardingSubtitle => GoogleFonts.inter(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        height: 35 / 24, // Line height 35px for font size 24px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
+  // Onboarding Description - 16px / Regular (400) / Line Height 21 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get onboardingDescription => GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 21 / 16, // Line height 21px for font size 16px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
       );
 
   // Title 3 - 22px / Semibold (600) / Letter Spacing -0.5px / Color #111111
