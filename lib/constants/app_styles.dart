@@ -119,10 +119,11 @@ class AppStyles {
         color: Colors.black,
       );
 
-  // TAB BAR LABEL - 10px / Medium (500)
+  // TAB BAR LABEL - 10px / Medium (500) / Line Height 15 / Letter Spacing -0.5px
   static TextStyle get tabBarLabel => GoogleFonts.inter(
         fontSize: 10,
         fontWeight: FontWeight.w500,
+        letterSpacing: -0.5,
         color: Colors.black,
       );
 
