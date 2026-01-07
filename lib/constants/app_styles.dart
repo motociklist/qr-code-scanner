@@ -28,6 +28,15 @@ class AppStyles {
         color: Colors.black,
       );
 
+  // Home Welcome Title - 28px / Bold (700) / Line Height 42 / Letter Spacing -0.5px / Color #111111
+  static TextStyle get homeWelcomeTitle => GoogleFonts.inter(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 42 / 28, // Line height 42px for font size 28px
+        letterSpacing: -0.5,
+        color: const Color(0xFF111111),
+      );
+
   // Title 2 - 22px / Semibold (600)
   static TextStyle get title2 => GoogleFonts.inter(
         fontSize: 24,
@@ -96,6 +105,15 @@ class AppStyles {
   static TextStyle get caption => GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w400,
+        letterSpacing: -0.5,
+        color: const Color(0xFF5A5A5A),
+      );
+
+  // Home Subtitle - 15px / Regular (400) / Line Height 23 / Letter Spacing -0.5px / Color #5A5A5A
+  static TextStyle get homeSubtitle => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        height: 23 / 15, // Line height 23px for font size 15px
         letterSpacing: -0.5,
         color: const Color(0xFF5A5A5A),
       );
