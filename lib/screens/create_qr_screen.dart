@@ -1,28 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
-// FIXME: Temporarily disabled - re-enable when subscription check is restored
-// import '../services/apphud_service.dart';
+import '../services/apphud_service.dart';
 import '../services/analytics_service.dart';
 import '../services/ads_service.dart';
 import '../services/appsflyer_service.dart';
 import '../constants/app_styles.dart';
+import '../widgets/standard_header.dart';
 import 'qr_result_screen.dart';
-// FIXME: Temporarily disabled - re-enable when subscription check is restored
-// import '../utils/navigation_helper.dart';
-// import 'pricing_screen.dart';
-
-enum QRType {
-  url,
-  text,
-  phone,
-  email,
-  contact,
-  wifi,
-}
+import '../utils/navigation_helper.dart';
+import 'pricing_screen.dart';
+import '../models/saved_qr_code.dart';
+import '../services/saved_qr_service.dart';
+import '../utils/qr_parser.dart';
 
 class CreateQRScreen extends StatefulWidget {
-  const CreateQRScreen({super.key});
+  final SavedQRCode? editingCode;
+
+  const CreateQRScreen({super.key, this.editingCode});
 
   @override
   State<CreateQRScreen> createState() => _CreateQRScreenState();
@@ -37,7 +32,63 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   void initState() {
     super.initState();
     _initializeControllers();
+    if (widget.editingCode != null) {
+      _loadEditingCode();
+    }
     AnalyticsService.instance.logScreenView('create_qr_screen');
+  }
+
+  void _loadEditingCode() {
+    final code = widget.editingCode!;
+    final content = code.content;
+
+    // Определяем тип QR кода
+    final qrType = QRParser.detectType(content);
+    _selectedType = qrType;
+
+    // Заполняем поля в зависимости от типа
+    switch (qrType) {
+      case QRType.url:
+        _controllers[QRType.url]!['url']!.text = content;
+        break;
+      case QRType.text:
+        _controllers[QRType.text]!['text']!.text = content;
+        break;
+      case QRType.phone:
+        final phone = QRParser.parsePhone(content);
+        _controllers[QRType.phone]!['phone']!.text = phone;
+        break;
+      case QRType.email:
+        final emailData = QRParser.parseEmail(content);
+        _controllers[QRType.email]!['email']!.text = emailData['email'] ?? '';
+        _controllers[QRType.email]!['subject']!.text =
+            emailData['subject'] ?? '';
+        _controllers[QRType.email]!['body']!.text = emailData['body'] ?? '';
+        break;
+      case QRType.contact:
+        final contactData = QRParser.parseContact(content);
+        _controllers[QRType.contact]!['name']!.text = contactData['name'] ?? '';
+        _controllers[QRType.contact]!['phone']!.text =
+            contactData['phone'] ?? '';
+        _controllers[QRType.contact]!['email']!.text =
+            contactData['email'] ?? '';
+        _controllers[QRType.contact]!['organization']!.text =
+            contactData['organization'] ?? '';
+        _controllers[QRType.contact]!['address']!.text =
+            contactData['address'] ?? '';
+        break;
+      case QRType.wifi:
+        final wifiData = QRParser.parseWiFi(content);
+        _controllers[QRType.wifi]!['ssid']!.text = wifiData['S'] ?? '';
+        _controllers[QRType.wifi]!['password']!.text = wifiData['P'] ?? '';
+        _controllers[QRType.wifi]!['security']!.text = wifiData['T'] ?? 'WPA';
+        break;
+      case QRType.sms:
+        // SMS не поддерживается в CreateQRScreen, оставляем как text
+        _selectedType = QRType.text;
+        _controllers[QRType.text]!['text']!.text = content;
+        break;
+    }
   }
 
   void _initializeControllers() {
@@ -111,6 +162,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         return _buildVCard();
       case QRType.wifi:
         return _buildWiFiString();
+      case QRType.sms:
+        // SMS не поддерживается, обрабатываем как text
+        return _controllers[QRType.text]!['text']!.text.trim();
     }
   }
 
@@ -142,7 +196,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     return 'WIFI:T:$security;S:$ssid;P:$password;;';
   }
 
-  void _generateQR() {
+  void _generateQR() async {
     final data = _buildQRData();
     if (data.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -151,14 +205,31 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       return;
     }
 
-    // FIXME: Temporarily disabled subscription check for creating QR codes
-    // TODO: Re-enable subscription check when ready
     // Check subscription for creating QR codes
-    // if (!ApphudService.instance.canUseFeature('create_qr')) {
-    //   _showSubscriptionRequired();
-    //   AppsFlyerService.instance.logEvent('create_qr_blocked');
-    //   return;
-    // }
+    if (!ApphudService.instance.canUseFeature('create_qr')) {
+      _showSubscriptionRequired();
+      AppsFlyerService.instance.logEvent('create_qr_blocked');
+      return;
+    }
+
+    // Если редактируем существующий код, обновляем его
+    if (widget.editingCode != null) {
+      final updatedCode = widget.editingCode!.copyWith(
+        title: _getTitleForType(),
+        content: data,
+        type: _getTypeString(),
+      );
+
+      await SavedQRService.instance.updateCode(updatedCode);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('QR code updated successfully')),
+        );
+        Navigator.pop(context);
+      }
+      return;
+    }
 
     AppsFlyerService.instance.logEvent('create_qr_success', eventValues: {
       'type': _selectedType.name,
@@ -180,8 +251,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
   }
 
-  // FIXME: Temporarily disabled - re-enable when subscription check is restored
-  // ignore: unused_element
   void _showSubscriptionRequired() {
     showDialog(
       context: context,
@@ -197,8 +266,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // FIXME: Temporarily disabled - re-enable when subscription check is restored
-              // NavigationHelper.push(context, const PricingScreen());
+              NavigationHelper.push(context, const PricingScreen());
             },
             child: const Text('Subscribe'),
           ),
@@ -206,7 +274,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       ),
     );
   }
-
 
   String _getTitleForType() {
     switch (_selectedType) {
@@ -224,6 +291,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             : _controllers[QRType.contact]!['name']!.text.trim();
       case QRType.wifi:
         return _controllers[QRType.wifi]!['ssid']!.text.trim();
+      case QRType.sms:
+        return 'Text QR Code';
     }
   }
 
@@ -241,13 +310,15 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         return 'Contact';
       case QRType.wifi:
         return 'WiFi';
+      case QRType.sms:
+        return 'Text';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
         child: Column(
           children: [
@@ -285,35 +356,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Expanded(
-            child: Text(
-              'Create QR Code',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: SvgPicture.asset(
-              'assets/images/creacte-page/cross.svg',
-              width: 24,
-              height: 24,
-            ),
-            onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
+    return StandardHeader(
+      title: widget.editingCode != null ? 'Edit QR Code' : 'Create QR Code',
+      trailing: StandardHeader.createIconButton(
+        iconPath: 'assets/images/creacte-page/cross.svg',
+        iconWidth: 12,
+        iconHeight: 12,
       ),
+      onTrailingTap: () => Navigator.pop(context),
     );
   }
 
@@ -321,6 +371,11 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Content Type',
+          style: AppStyles.bodyMediumText,
+        ),
+        const SizedBox(height: 12),
         // First row: URL, Text, Contact
         Row(
           children: [
@@ -341,9 +396,15 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        // Second row: Wi-Fi
-        _buildTypeCard(
-            'Wi-Fi', QRType.wifi, 'assets/images/creacte-page/wi-fi.svg'),
+        // Second row: Wi-Fi full width
+        Row(
+          children: [
+            Expanded(
+              child: _buildTypeCard(
+                  'Wi-Fi', QRType.wifi, 'assets/images/creacte-page/wi-fi.svg'),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -357,14 +418,18 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? Colors.white : const Color(0xFFF5F7FA),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                isSelected ? const Color(0xFFE5E8EF) : const Color(0xFFE9ECF2),
+          ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -373,13 +438,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SvgPicture.asset(
               iconPath,
               width: 20,
               height: 20,
               colorFilter: ColorFilter.mode(
-                isSelected ? const Color(0xFF5A5A5A) : const Color(0xFF5A5A5A),
+                isSelected ? const Color(0xFF111111) : const Color(0xFF777777),
                 BlendMode.srcIn,
               ),
             ),
@@ -387,9 +453,11 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : const Color(0xFF5A5A5A),
+                color: isSelected
+                    ? const Color(0xFF111111)
+                    : const Color(0xFF666666),
                 fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],
@@ -554,6 +622,17 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             options: ['WPA', 'WEP', 'nopass'],
           ),
         ];
+      case QRType.sms:
+        // SMS не поддерживается, обрабатываем как text
+        return [
+          _buildTextField(
+            controller: _controllers[QRType.text]!['text']!,
+            label: 'Text',
+            hint: 'Enter your text',
+            icon: Icons.text_fields,
+            maxLines: 5,
+          ),
+        ];
     }
   }
 
@@ -571,7 +650,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: const Color(0xFFE5E8EF)),
       ),
       child: TextField(
         controller: controller,
@@ -582,7 +661,7 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           labelText: label,
           hintText: hint,
           prefixIcon: icon != null && !showIconOnRight
-              ? Icon(icon, color: Colors.grey[600])
+              ? Icon(icon, color: const Color(0xFF8A8A8A))
               : null,
           suffixIcon: showIconOnRight
               ? IconButton(
@@ -631,30 +710,38 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: const Color(0xFFE5E8EF)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Color section
-              const Text(
-                'Color',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 12),
+              // Color section - label and swatches in one row
               Row(
                 children: [
-                  _buildColorSwatch(Colors.black),
-                  const SizedBox(width: 12),
-                  _buildColorSwatch(const Color(0xFF7ACBFF)), // Light blue
-                  const SizedBox(width: 12),
-                  _buildColorSwatch(const Color(0xFF4CAF50)), // Light green
-                  const SizedBox(width: 12),
-                  _buildColorSwatch(const Color(0xFFFF9800)), // Orange
+                  Text(
+                    'Color',
+                    style: AppStyles.designOptionLabel,
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildColorSwatch(Colors.black),
+                      const SizedBox(width: 12),
+                      _buildColorSwatch(const Color(0xFF7ACBFF)), // Light blue
+                      const SizedBox(width: 12),
+                      _buildColorSwatch(const Color(0xFF4CAF50)), // Light green
+                      const SizedBox(width: 12),
+                      _buildColorSwatch(const Color(0xFFFF9800)), // Orange
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -662,29 +749,13 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     '+ Add Logo',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
+                    style: AppStyles.designOptionLabel,
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Pro Feature',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.orange[700],
-                      ),
-                    ),
+                  Text(
+                    'Pro Feature',
+                    style: AppStyles.proFeatureBadge,
                   ),
                 ],
               ),
@@ -704,15 +775,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
         });
       },
       child: Container(
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.transparent,
-            width: 3,
-          ),
+          border: isSelected
+              ? Border.all(color: const Color(0xFF4DA6FF), width: 3)
+              : null,
         ),
       ),
     );
@@ -732,6 +802,13 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
           end: Alignment.centerRight,
         ),
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4DA6FF).withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: ElevatedButton(
         onPressed: _generateQR,
@@ -742,9 +819,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          'Generate QR Code',
-          style: TextStyle(
+        child: Text(
+          widget.editingCode != null ? 'Update QR Code' : 'Generate QR Code',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -785,7 +862,6 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     );
   }
 
-
   Widget _buildBottomNavigationBar() {
     return ClipPath(
       clipper: _BottomNavBarClipper(),
@@ -812,8 +888,9 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
                 const SizedBox(width: 60), // Space for FAB
                 _buildNavItem(
                     'assets/images/nav_menu/my_qr_code.svg', 'My QR Codes', 2),
+                // History uses PNG icon
                 _buildNavItem(
-                    'assets/images/nav_menu/history.svg', 'History', 3),
+                    'assets/images/nav_menu/history-png.png', 'History', 3),
               ],
             ),
           ),
@@ -825,11 +902,14 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
   Widget _buildNavItem(String iconPath, String label, int index) {
     const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
+    final bool isSvg = iconPath.toLowerCase().endsWith('.svg');
+    final bool isPng = iconPath.toLowerCase().endsWith('.png');
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // Просто закрываем CreateQRScreen, пользователь вернется на HomeScreen
-          Navigator.pop(context);
+          // Закрываем CreateQRScreen и возвращаем индекс таба для перехода
+          Navigator.pop(context, index);
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -837,17 +917,25 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
-                SvgPicture.asset(
-                  iconPath,
-                  width: 24,
-                  height: 24,
-                  placeholderBuilder: (context) => Container(
+                if (isSvg)
+                  SvgPicture.asset(
+                    iconPath,
                     width: 24,
                     height: 24,
-                    color: Colors.transparent,
+                    placeholderBuilder: (context) => Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.transparent,
+                    ),
+                    semanticsLabel: label,
+                  )
+                else if (isPng)
+                  Image.asset(
+                    iconPath,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
                   ),
-                  semanticsLabel: label,
-                ),
               ],
             ),
             const SizedBox(height: 4),

@@ -7,12 +7,10 @@ import 'create_qr_screen.dart';
 import '../services/history_service.dart';
 import '../models/scan_history_item.dart';
 import 'result_screen.dart';
-// FIXME: Temporarily disabled - re-enable when subscription check is restored
-// import '../services/apphud_service.dart';
-// import 'pricing_screen.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/date_formatter.dart';
-import '../utils/url_helper.dart';
+import '../utils/qr_type_helper.dart';
+import '../components/icon_circle.dart';
 import '../constants/app_styles.dart';
 import '../constants/app_colors.dart';
 
@@ -35,11 +33,12 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _currentIndex = widget.initialTabIndex ?? 0;
     _screens = [
-      HomeTabScreen(onNavigateToScan: () {
-        setState(() {
-          _currentIndex = 1;
-        });
-      }),
+      HomeTabScreen(
+        onNavigateToScan: () => _switchToTab(1),
+        onNavigateToMyQRCodes: () => _switchToTab(2),
+        onNavigateToHistory: () => _switchToTab(3),
+        onNavigateToCreateQR: (context) => _openCreateQRScreen(context),
+      ),
       const QRScannerScreen(),
       const MyQRCodesScreen(),
       const HistoryScreen(),
@@ -79,8 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 60), // Space for FAB
                   _buildNavItem('assets/images/nav_menu/my_qr_code.svg',
                       'My QR Codes', 2),
+                  // History uses PNG icon
                   _buildNavItem(
-                      'assets/images/nav_menu/history.svg', 'History', 3),
+                      'assets/images/nav_menu/history-png.png', 'History', 3),
                 ],
               ),
             ),
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => NavigationHelper.push(context, const CreateQRScreen()),
+            onTap: () => _openCreateQRScreen(context),
             borderRadius: BorderRadius.circular(28),
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
@@ -114,28 +114,63 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _switchToTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    // Если переключаемся на экран сканирования, убеждаемся что камера запущена
+    if (index == 1) {
+      // Даем время для переключения экрана
+      Future.delayed(const Duration(milliseconds: 100), () {
+        // Экран сканирования сам запустит камеру в didChangeDependencies
+      });
+    }
+  }
+
+  Future<void> _openCreateQRScreen(BuildContext context) async {
+    final result = await NavigationHelper.push(
+      context,
+      const CreateQRScreen(),
+    );
+    // Если вернулся индекс таба, переключаемся на него
+    if (result != null && result is int && mounted) {
+      setState(() {
+        _currentIndex = result;
+      });
+    }
+  }
+
   Widget _buildNavItem(String iconPath, String label, int index) {
     final isSelected = _currentIndex == index;
-    const activeColor = Color(0xFF7ACBFF); // Light blue from gradient
+    const activeColor = Color(0xFF7ACBFF); // Blue color for active nav text
     const inactiveColor = Color(0xFFB0B0B0); // Grey color
 
+    final bool isSvg = iconPath.toLowerCase().endsWith('.svg');
+    final bool isPng = iconPath.toLowerCase().endsWith('.png');
+
     // Выбираем активную или неактивную версию иконки
-    final String activeIconPath = iconPath.replaceAll('.svg', '-activ.svg');
-    final String finalIconPath = isSelected ? activeIconPath : iconPath;
+    String finalIconPath = iconPath;
+    if (isSelected) {
+      if (isSvg) {
+        finalIconPath = iconPath.replaceFirst('.svg', '-activ.svg');
+      } else if (isPng) {
+        // Пробуем найти активную PNG версию
+        final String activePngPath =
+            iconPath.replaceFirst('.png', '-activ.png');
+        // Если активной PNG нет, используем SVG активную версию (для истории)
+        if (iconPath.contains('history')) {
+          finalIconPath =
+              iconPath.replaceFirst('history-png.png', 'history-activ.svg');
+        } else {
+          finalIconPath = activePngPath;
+        }
+      }
+    }
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            _currentIndex = index;
-          });
-          // Если переключаемся на экран сканирования, убеждаемся что камера запущена
-          if (index == 1) {
-            // Даем время для переключения экрана
-            Future.delayed(const Duration(milliseconds: 100), () {
-              // Экран сканирования сам запустит камеру в didChangeDependencies
-            });
-          }
+          _switchToTab(index);
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -143,17 +178,25 @@ class _HomeScreenState extends State<HomeScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
-                SvgPicture.asset(
-                  finalIconPath,
-                  width: 24,
-                  height: 24,
-                  placeholderBuilder: (context) => Container(
+                if (finalIconPath.toLowerCase().endsWith('.svg'))
+                  SvgPicture.asset(
+                    finalIconPath,
                     width: 24,
                     height: 24,
-                    color: Colors.transparent,
+                    placeholderBuilder: (context) => Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.transparent,
+                    ),
+                    semanticsLabel: label,
+                  )
+                else
+                  Image.asset(
+                    finalIconPath,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
                   ),
-                  semanticsLabel: label,
-                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -172,8 +215,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class HomeTabScreen extends StatefulWidget {
   final VoidCallback? onNavigateToScan;
+  final VoidCallback? onNavigateToMyQRCodes;
+  final VoidCallback? onNavigateToHistory;
+  final Future<void> Function(BuildContext)? onNavigateToCreateQR;
 
-  const HomeTabScreen({super.key, this.onNavigateToScan});
+  const HomeTabScreen({
+    super.key,
+    this.onNavigateToScan,
+    this.onNavigateToMyQRCodes,
+    this.onNavigateToHistory,
+    this.onNavigateToCreateQR,
+  });
 
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
@@ -274,14 +326,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       title: 'Create QR',
                       subtitle: 'Generate new',
                       onTap: () {
-                        // FIXME: Temporarily disabled subscription check for creating QR codes
-                        // TODO: Re-enable subscription check when ready
-                        // if (!ApphudService.instance
-                        //     .canUseFeature('create_qr')) {
-                        //   NavigationHelper.push(context, const PricingScreen());
-                        // } else {
-                        NavigationHelper.push(context, const CreateQRScreen());
-                        // }
+                        widget.onNavigateToCreateQR?.call(context);
                       },
                     ),
                     _buildActionCard(
@@ -290,8 +335,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: const Color(0xFFFFB86C), // Bright orange
                       title: 'My QR Codes',
                       subtitle: 'Saved codes',
-                      onTap: () => NavigationHelper.push(
-                          context, const MyQRCodesScreen()),
+                      onTap: () {
+                        widget.onNavigateToMyQRCodes?.call();
+                      },
                     ),
                     _buildActionCard(
                       context,
@@ -299,8 +345,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       iconColor: const Color(0xFFB0B0B0), // Grey
                       title: 'History',
                       subtitle: 'Recent scans',
-                      onTap: () =>
-                          NavigationHelper.push(context, const HistoryScreen()),
+                      onTap: () {
+                        widget.onNavigateToHistory?.call();
+                      },
                     ),
                   ],
                 ),
@@ -431,38 +478,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   }
 
   Widget _buildRecentActivityItem(BuildContext context, ScanHistoryItem item) {
-    final isUrl = UrlHelper.isUrl(item.code);
-    final isCreated = item.action == 'Created';
-    final isShared = item.action == 'Shared';
-    final isWifi = item.type == 'WIFI';
-    final isContact = item.type == 'CONTACT';
-
-    // Определяем иконку и цвет в зависимости от типа активности
-    String iconPath;
-    Color iconColor;
-    String activityText;
-
-    if (isCreated && isWifi) {
-      iconPath = 'assets/images/home-page/plus.svg';
-      iconColor = const Color(0xFF77C97E); // Bright green
-      activityText = 'Created WiFi QR';
-    } else if ((isCreated || isShared) && isContact) {
-      iconPath = 'assets/images/home-page/shared.svg';
-      iconColor = const Color(0xFFFFB86C); // Bright orange
-      activityText = 'Shared contact QR';
-    } else if (isShared) {
-      iconPath = 'assets/images/home-page/shared.svg';
-      iconColor = const Color(0xFFFFB86C); // Bright orange
-      activityText = 'Shared QR code';
-    } else if (isUrl) {
-      iconPath = 'assets/images/home-page/link.svg';
-      iconColor = const Color(0xFF7ACBFF); // Bright blue
-      activityText = 'Scanned website link';
-    } else {
-      iconPath = 'assets/images/home-page/link.svg';
-      iconColor = const Color(0xFF7ACBFF); // Bright blue
-      activityText = 'Scanned QR code';
-    }
+    // Используем ту же логику, что и в HistoryScreen
+    final activityText =
+        QRTypeHelper.getTitle(item.type, item.code, action: item.action);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -493,30 +511,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: iconColor,
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      iconPath,
-                      width: 12,
-                      height: 12,
-                      colorFilter: ColorFilter.mode(
-                        AppTheme.colors.strokeColor,
-                        BlendMode.srcIn,
-                      ),
-                      placeholderBuilder: (context) => Container(
-                        width: 12,
-                        height: 12,
-                        color: Colors.transparent,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildIconWidget(item),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -551,6 +546,96 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildIconWidget(ScanHistoryItem item) {
+    final backgroundColor = QRTypeHelper.getIconColor(item.type, item.action);
+
+    // For Shared action, use shared icon
+    if (item.action == 'Shared') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/shared.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For Created action, use SVG add icon
+    if (item.action == 'Created') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/nav_menu/add.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+            placeholderBuilder: (context) => const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For QR code (scanned items that are not WIFI, CONTACT, or Created)
+    if (item.action != 'Created' &&
+        item.type != 'WIFI' &&
+        item.type != 'CONTACT') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/qr.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For other icons (share, etc.)
+    return IconCircle(
+      icon: QRTypeHelper.getIcon(item.type, item.action),
+      backgroundColor: backgroundColor,
+      iconColor: Colors.white,
+      iconSize: 16,
+      size: 48,
     );
   }
 }

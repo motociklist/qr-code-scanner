@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/feature_card.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/apphud_service.dart';
 import '../services/analytics_service.dart';
 import '../services/appsflyer_service.dart';
@@ -15,202 +15,246 @@ class PricingScreen extends StatefulWidget {
 
 class _PricingScreenState extends State<PricingScreen> {
   String? _selectedPlan;
+  bool _productsLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPlan = 'weekly'; // Default selection
+    _loadProducts();
+  }
+
+  /// Load products from AppHud
+  Future<void> _loadProducts() async {
+    if (_productsLoaded) return;
+
+    try {
+      // Refresh paywalls to ensure products are loaded
+      await ApphudService.instance.refreshPaywalls();
+
+      // Wait a bit for products to load
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      setState(() {
+        _productsLoaded = true;
+      });
+    } catch (e) {
+      debugPrint('Error loading products: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Background decorative circles
-            Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blue[50]!.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -100,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blue[50]!.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            // Content
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // Header with close and restore
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.grey[200],
-                            ),
-                            child: const Icon(Icons.close, color: Colors.black),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF7FBFF), // Very light blue
+              Color(0xFFFFFFFF), // White
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  // Header with close and restore
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
                           ),
-                          onPressed: () => Navigator.pop(context),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/images/subscr-page/cross.svg',
+                              width: 12,
+                              height: 12,
+                            ),
+                          ),
                         ),
-                        TextButton(
-                          onPressed: () async {
-                            final subscriptionService = ApphudService.instance;
-                            final currentContext = context;
-                            final restored =
-                                await subscriptionService.restorePurchases();
-                            AppsFlyerService.instance
-                                .logEvent('restore_purchases');
-                            if (mounted && currentContext.mounted) {
-                              ScaffoldMessenger.of(currentContext).showSnackBar(
-                                SnackBar(
-                                  content: Text(restored
-                                      ? 'Purchases restored successfully'
-                                      : 'No purchases found to restore'),
-                                ),
-                              );
-                              if (restored && currentContext.mounted) {
-                                Navigator.pop(currentContext);
-                              }
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final subscriptionService = ApphudService.instance;
+                          final currentContext = context;
+                          final restored =
+                              await subscriptionService.restorePurchases();
+                          AppsFlyerService.instance
+                              .logEvent('restore_purchases');
+                          if (mounted && currentContext.mounted) {
+                            ScaffoldMessenger.of(currentContext).showSnackBar(
+                              SnackBar(
+                                content: Text(restored
+                                    ? 'Purchases restored successfully'
+                                    : 'No purchases found to restore'),
+                              ),
+                            );
+                            if (restored && currentContext.mounted) {
+                              Navigator.pop(currentContext);
                             }
-                          },
-                          child: const Text(
-                            'Restore',
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 16,
-                            ),
+                          }
+                        },
+                        child: const Text(
+                          'Restore',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // QR Code Icon
+                  Container(
+                    width: 217,
+                    height: 217,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
-                    const SizedBox(height: 40),
-                    // QR Code Icon
-                    Container(
-                      width: 120,
-                      height: 120,
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'assets/images/subscr-page/qr.svg',
+                        width: 165,
+                        height: 165,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Title
+                  const Text(
+                    'Unlock Full QR Tools',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  // Subtitle
+                  Text(
+                    'Unlimited scans, custom QR creation, and full history access.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  // Features list
+                  _buildFeatureItem(
+                    icon: 'assets/images/subscr-page/inf.svg',
+                    title: 'Unlimited QR Scans',
+                    description: 'Scan as many QR codes as you want',
+                    iconWidth: 23,
+                    iconHeight: 12,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: 'assets/images/subscr-page/color.svg',
+                    title: 'Create All QR Types',
+                    description: 'URL, Text, Contact, WiFi, and more',
+                    iconWidth: 18,
+                    iconHeight: 18,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: 'assets/images/subscr-page/shild.svg',
+                    title: 'No Ads',
+                    description: 'Enjoy an ad-free experience',
+                    iconWidth: 17,
+                    iconHeight: 18,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: 'assets/images/subscr-page/cloud.svg',
+                    title: 'Cloud Backup',
+                    description: 'Sync your QR codes across devices',
+                    iconWidth: 22,
+                    iconHeight: 16,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: 'assets/images/subscr-page/graf.svg',
+                    title: 'Advanced Analytics',
+                    description: 'Track scans and view detailed statistics',
+                    iconWidth: 18,
+                    iconHeight: 15,
+                  ),
+                  const SizedBox(height: 32),
+                  // Pricing plans
+                  _buildPricingPlan(
+                    title: 'Weekly Plan',
+                    price: '\$3.99',
+                    period: '/ week',
+                    benefit: '3-day free trial',
+                    badge: 'MOST POPULAR',
+                    badgeColor: const Color(0xFF7ACBFF),
+                    badgeTextColor: const Color.fromARGB(255, 255, 255, 255),
+                    planId: 'weekly',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPricingPlan(
+                    title: 'Monthly Plan',
+                    price: '\$7.99',
+                    period: '/ month',
+                    benefit: 'Cancel anytime',
+                    planId: 'monthly',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPricingPlan(
+                    title: 'Yearly Plan',
+                    price: '\$29.99',
+                    period: '/ year',
+                    originalPrice: '\$99.00',
+                    saveText: 'Save \$70',
+                    benefit: 'Best value option',
+                    badge: 'SAVE \$70',
+                    badgeColor: const Color(0xFF77C97E),
+                    badgeTextColor: Colors.white,
+                    badgePosition: BadgePosition.right,
+                    planId: 'yearly',
+                  ),
+                  const SizedBox(height: 32),
+                  // Continue button
+                  SizedBox(
+                    width: double.infinity,
+                    child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF7ACBFF), // 0% - light blue
+                            Color(0xFF4DA6FF), // 100% - darker blue
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                            color:
+                                const Color(0xFF4DA6FF).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.qr_code_2,
-                        size: 60,
-                        color: Colors.blue[400],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // Title
-                    const Text(
-                      'Unlock Full QR Tools',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    // Subtitle
-                    Text(
-                      'Unlimited scans, custom QR creation, and full history access.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
-                    // Features list
-                    const FeatureCard(
-                      icon: Icons.all_inclusive,
-                      title: 'Unlimited QR Scans',
-                      description: 'Scan as many QR codes as you want',
-                    ),
-                    const SizedBox(height: 16),
-                    const FeatureCard(
-                      icon: Icons.qr_code_scanner,
-                      title: 'Create All QR Types',
-                      description: 'URL, Text, Contact, WiFi, and more',
-                    ),
-                    const SizedBox(height: 16),
-                    const FeatureCard(
-                      icon: Icons.shield,
-                      title: 'No Ads',
-                      description: 'Enjoy an ad-free experience',
-                    ),
-                    const SizedBox(height: 16),
-                    const FeatureCard(
-                      icon: Icons.cloud,
-                      title: 'Cloud Backup',
-                      description: 'Sync your QR codes across devices',
-                    ),
-                    const SizedBox(height: 16),
-                    const FeatureCard(
-                      icon: Icons.analytics,
-                      title: 'Advanced Analytics',
-                      description: 'Track scans and view detailed statistics',
-                    ),
-                    const SizedBox(height: 40),
-                    // Pricing plans
-                    _buildPricingPlan(
-                      title: 'Weekly Plan',
-                      price: '\$3.99',
-                      period: '/ week',
-                      benefit: '3-day free trial',
-                      badge: 'MOST POPULAR',
-                      badgeColor: Colors.blue[100]!,
-                      planId: 'weekly',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPricingPlan(
-                      title: 'Monthly Plan',
-                      price: '\$7.99',
-                      period: '/ month',
-                      benefit: 'Cancel anytime',
-                      planId: 'monthly',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPricingPlan(
-                      title: 'Yearly Plan',
-                      price: '\$29.99',
-                      period: '/ year',
-                      originalPrice: '\$99.99',
-                      benefit: 'Best value option',
-                      badge: 'SAVE \$70',
-                      badgeColor: Colors.green[100]!,
-                      badgePosition: BadgePosition.right,
-                      planId: 'yearly',
-                    ),
-                    const SizedBox(height: 32),
-                    // Continue button
-                    SizedBox(
-                      width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _selectedPlan == null
                             ? null
@@ -230,22 +274,79 @@ class _PricingScreenState extends State<PricingScreen> {
                                 );
 
                                 try {
-                                  // Find the selected product
-                                  final selectedProduct = ApphudService.instance
-                                      .getProduct(_selectedPlan!);
+                                  // Ensure products are loaded
+                                  if (!_productsLoaded) {
+                                    await _loadProducts();
+                                  }
+
+                                  // Map plan ID to product ID
+                                  String productId;
+                                  switch (_selectedPlan!.toLowerCase()) {
+                                    case 'weekly':
+                                      productId = ApphudService.productIdWeekly;
+                                      break;
+                                    case 'monthly':
+                                      productId =
+                                          ApphudService.productIdMonthly;
+                                      break;
+                                    case 'yearly':
+                                      productId = ApphudService.productIdYearly;
+                                      break;
+                                    default:
+                                      productId = _selectedPlan!;
+                                  }
+
+                                  // Try to get product - if not found, try to refresh paywalls
+                                  var selectedProduct = ApphudService.instance
+                                      .getProduct(productId);
+
+                                  if (selectedProduct == null) {
+                                    debugPrint(
+                                        'Product not found in paywalls, refreshing...');
+                                    await ApphudService.instance
+                                        .refreshPaywalls();
+                                    await Future.delayed(
+                                        const Duration(milliseconds: 1000));
+                                    selectedProduct = ApphudService.instance
+                                        .getProduct(productId);
+                                  }
+
+                                  // If still not found, try async method
+                                  if (selectedProduct == null) {
+                                    debugPrint(
+                                        'Product still not found, trying async method...');
+                                    selectedProduct = await ApphudService
+                                        .instance
+                                        .getProductAsync(productId);
+                                  }
 
                                   AppsFlyerService.instance.logEvent(
                                       'purchase_initiated',
                                       eventValues: {
-                                        'product_id': _selectedPlan!,
+                                        'product_id': productId,
                                       });
 
                                   if (selectedProduct != null) {
-                                    final productId =
-                                        selectedProduct['productId']
-                                                as String? ??
-                                            _selectedPlan!;
                                     final currentContext = context;
+
+                                    // Check if AppHud is properly initialized
+                                    if (!ApphudService.instance.isInitialized) {
+                                      if (!mounted || !currentContext.mounted) {
+                                        return;
+                                      }
+                                      Navigator.pop(
+                                          currentContext); // Close loading
+                                      ScaffoldMessenger.of(currentContext)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'AppHud is not initialized. Please check your internet connection and try again.'),
+                                          duration: Duration(seconds: 4),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
                                     final success = await ApphudService.instance
                                         .purchaseSubscription(
                                       productId,
@@ -258,32 +359,26 @@ class _PricingScreenState extends State<PricingScreen> {
                                         currentContext); // Close loading
 
                                     if (success) {
-                                      // Get price from product
-                                      final skProduct =
-                                          selectedProduct['skProduct']
-                                              as Map<String, dynamic>?;
+                                      // Get price from product using getProductPrice
+                                      final priceInfo = ApphudService.instance
+                                          .getProductPrice(productId);
                                       final price =
-                                          (skProduct?['price'] as num?)
-                                                  ?.toDouble() ??
-                                              0.0;
-                                      final priceLocale =
-                                          skProduct?['priceLocale']
-                                              as Map<String, dynamic>?;
+                                          priceInfo?['price'] as double? ?? 0.0;
                                       final currencyCode =
-                                          priceLocale?['currencyCode']
+                                          priceInfo?['currencyCode']
                                                   as String? ??
                                               'USD';
 
                                       await analyticsService
                                           .logSubscriptionPurchase(
-                                        _selectedPlan!,
+                                        productId,
                                         price,
                                       );
 
                                       AppsFlyerService.instance.logEvent(
                                           'purchase_completed',
                                           eventValues: {
-                                            'product_id': _selectedPlan!,
+                                            'product_id': productId,
                                             'price': price,
                                             'currency': currencyCode,
                                           });
@@ -319,11 +414,26 @@ class _PricingScreenState extends State<PricingScreen> {
                                     }
                                     Navigator.pop(
                                         currentContext); // Close loading
+
+                                    // Check if AppHud is initialized
+                                    String errorMessage;
+                                    if (!ApphudService.instance.isInitialized) {
+                                      errorMessage =
+                                          'AppHud is not initialized. Please check your internet connection and AppHud configuration.';
+                                    } else if (ApphudService
+                                        .instance.paywalls.isEmpty) {
+                                      errorMessage =
+                                          'Products are not loaded. Please check your AppHud API key and configuration in AppHud Dashboard.';
+                                    } else {
+                                      errorMessage =
+                                          'Product "$productId" not found. Please check that the product is configured in AppHud Dashboard and try again.';
+                                    }
+
                                     ScaffoldMessenger.of(currentContext)
                                         .showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Product not found. Please try again later.'),
+                                      SnackBar(
+                                        content: Text(errorMessage),
+                                        duration: const Duration(seconds: 5),
                                       ),
                                     );
                                   }
@@ -343,12 +453,14 @@ class _PricingScreenState extends State<PricingScreen> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[400],
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           disabledBackgroundColor: Colors.grey[300],
+                          elevation: 0,
                         ),
                         child: const Text(
                           'Continue',
@@ -360,57 +472,129 @@ class _PricingScreenState extends State<PricingScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    // Legal text
-                    Text(
-                      'Auto-renewable. Cancel anytime.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  // Legal text
+                  Text(
+                    'Auto-renewable. Cancel anytime.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
                     ),
-                    const SizedBox(height: 12),
-                    // Terms and Privacy
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            'Terms of Service',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[700],
-                            ),
-                          ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  // Terms and Privacy
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {},
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        Text(
-                          ' • ',
+                        child: Text(
+                          'Terms of Service',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[400],
+                            color: Colors.grey[700],
+                            decoration: TextDecoration.underline,
                           ),
                         ),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            'Privacy Policy',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[700],
-                            ),
+                      ),
+                      Text(
+                        ' • ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Privacy Policy',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            decoration: TextDecoration.underline,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem({
+    required String icon,
+    required String title,
+    required String description,
+    required double iconWidth,
+    required double iconHeight,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFF7ACBFF),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                icon,
+                width: iconWidth,
+                height: iconHeight,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -422,101 +606,90 @@ class _PricingScreenState extends State<PricingScreen> {
     required String benefit,
     String? badge,
     Color? badgeColor,
+    Color? badgeTextColor,
     BadgePosition badgePosition = BadgePosition.top,
     String? originalPrice,
+    String? saveText,
     required String planId,
   }) {
     final isSelected = _selectedPlan == planId;
 
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? Colors.blue[400]! : Colors.grey[300]!,
-              width: isSelected ? 2 : 1,
+    return Padding(
+      padding: EdgeInsets.only(
+        top: badge != null && badgePosition == BadgePosition.top ? 15 : 0,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Main card
+          Container(
+            padding: EdgeInsets.only(
+              top:
+                  badge != null && badgePosition == BadgePosition.top ? 20 : 20,
+              left: 20,
+              right: 20,
+              bottom: 20,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF2196F3) : Colors.grey[300]!,
+                width: isSelected ? 2 : 1,
               ),
-            ],
-          ),
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _selectedPlan = planId;
-              });
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (badge != null && badgePosition == BadgePosition.top) ...[
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: badgeColor ?? Colors.blue[100],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      badge,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
+            ),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedPlan = planId;
+                });
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            title,
+                            price,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                price,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
+                          const SizedBox(width: 4),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              period,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
                               ),
-                              const SizedBox(width: 4),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: Text(
-                                  period,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                          if (originalPrice != null) ...[
-                            const SizedBox(height: 4),
+                        ],
+                      ),
+                      if (originalPrice != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             Text(
                               originalPrice,
                               style: TextStyle(
@@ -525,64 +698,107 @@ class _PricingScreenState extends State<PricingScreen> {
                                 decoration: TextDecoration.lineThrough,
                               ),
                             ),
+                            if (saveText != null) ...[
+                              const SizedBox(width: 8),
+                              Text(
+                                saveText,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF4CAF50),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ],
-                          const SizedBox(height: 8),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Text(
+                        benefit,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                  if (isSelected)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Color(0xFF2196F3),
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
                           Text(
-                            benefit,
+                            'Selected',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                              fontSize: 14,
+                              color: Color(0xFF2196F3),
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    if (badge != null && badgePosition == BadgePosition.right)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: badgeColor ?? Colors.green[100],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          badge,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                if (isSelected)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.blue[400],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Selected',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.blue[400],
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+          // Badge on top center (for Weekly Plan) - должен быть последним чтобы быть поверх
+          if (badge != null && badgePosition == BadgePosition.top)
+            Positioned(
+              top: -10,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: badgeColor ?? const Color(0xFF7ACBFF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: badgeTextColor ?? const Color(0xFF7ACBFF),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // Badge on top right (for Yearly Plan) - должен быть последним чтобы быть поверх
+          if (badge != null && badgePosition == BadgePosition.right)
+            Positioned(
+              top: -10,
+              right: 20,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: badgeColor ?? const Color(0xFF77C97E),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badge,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: badgeTextColor ?? Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

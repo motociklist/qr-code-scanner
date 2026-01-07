@@ -11,9 +11,11 @@ import '../components/filter_chips.dart';
 import '../components/empty_state.dart';
 import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
-import '../utils/navigation_helper.dart';
 import '../utils/dialog_helper.dart';
-import 'result_screen.dart';
+import '../constants/app_styles.dart';
+import '../utils/navigation_helper.dart';
+import '../widgets/standard_header.dart';
+import 'create_qr_screen.dart';
 
 class MyQRCodesScreen extends StatefulWidget {
   const MyQRCodesScreen({super.key});
@@ -28,6 +30,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
   String _selectedFilter = 'All';
   String _searchQuery = '';
   bool _isSearching = false;
+  OverlayEntry? _menuOverlayEntry;
 
   final List<String> _filters = ['All', 'URL', 'Text', 'WiFi', 'Contact'];
 
@@ -88,53 +91,147 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
     }
   }
 
-  void _showOptionsMenu(BuildContext context, SavedQRCode code) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.visibility),
-              title: const Text('View Details'),
-              onTap: () {
-                Navigator.pop(context);
-                NavigationHelper.push(
-                  context,
-                  ResultScreen(code: code.content, fromHistory: true),
-                );
-                _savedQRService.incrementViewCount(code.id);
-                // setState не нужен - автоматически обновится через listener
-              },
+  void _showOptionsMenu(
+      BuildContext context, SavedQRCode code, Offset tapPosition) {
+    _removeOptionsMenu();
+
+    final overlay = Overlay.of(context);
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final offset = overlayBox.globalToLocal(tapPosition);
+
+    const menuWidth = 167.0;
+    const menuHeight = 88.0;
+    const verticalGap = 16.0;
+
+    final left = (offset.dx - menuWidth / 2)
+        .clamp(12.0, overlayBox.size.width - menuWidth - 12.0);
+    final top = (offset.dy - menuHeight - verticalGap)
+        .clamp(12.0, overlayBox.size.height - menuHeight - 12.0);
+
+    _menuOverlayEntry = OverlayEntry(
+      builder: (_) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _removeOptionsMenu,
+              behavior: HitTestBehavior.translucent,
             ),
-            ListTile(
-              leading: const Icon(Icons.qr_code_2),
-              title: const Text('View QR Code'),
-              onTap: () {
-                Navigator.pop(context);
-                _showFullSizeQR(code);
-              },
+          ),
+          Positioned(
+            left: left,
+            top: top,
+            width: menuWidth,
+            height: menuHeight,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildMenuButton(
+                      context: context,
+                      iconPath: 'assets/images/my_qr_code-page/menu/shared.svg',
+                      backgroundColor: const Color(0xFF77C97E),
+                      iconSize: const Size(11.3, 10),
+                      label: 'Share All',
+                      onTap: () {
+                        _removeOptionsMenu();
+                        _exportQRCode(code);
+                      },
+                    ),
+                    _buildMenuButton(
+                      context: context,
+                      iconPath: 'assets/images/my_qr_code-page/menu/edit.svg',
+                      backgroundColor: const Color(0xFF7ACBFF),
+                      iconSize: const Size(12, 12),
+                      label: 'Edit',
+                      onTap: () {
+                        _removeOptionsMenu();
+                        NavigationHelper.push(
+                          context,
+                          CreateQRScreen(editingCode: code),
+                        );
+                      },
+                    ),
+                    _buildMenuButton(
+                      context: context,
+                      iconPath: 'assets/images/my_qr_code-page/menu/delete.svg',
+                      backgroundColor: const Color(0xFFFFB86C),
+                      iconSize: const Size(10, 12),
+                      label: 'Delete',
+                      onTap: () {
+                        _removeOptionsMenu();
+                        _deleteCode(code);
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.download),
-              title: const Text('Export Image'),
-              onTap: () {
-                Navigator.pop(context);
-                _exportQRCode(code);
-              },
+          ),
+        ],
+      ),
+    );
+
+    overlay.insert(_menuOverlayEntry!);
+  }
+
+  void _removeOptionsMenu() {
+    _menuOverlayEntry?.remove();
+    _menuOverlayEntry = null;
+  }
+
+  Widget _buildMenuButton({
+    required BuildContext context,
+    required String iconPath,
+    required Color backgroundColor,
+    required String label,
+    required VoidCallback onTap,
+    required Size iconSize,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
             ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                _deleteCode(code);
-              },
+            child: Center(
+              child: SvgPicture.asset(
+                iconPath,
+                width: iconSize.width,
+                height: iconSize.height,
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: AppStyles.caption.copyWith(fontSize: 11),
+          ),
+        ],
       ),
     );
   }
@@ -166,42 +263,20 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // White background container for header and filters
+            Container(
+              color: Colors.white,
+              child: Column(
                 children: [
-                  const Text(
-                    'My QR Codes',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  // Header
+                  StandardHeader(
+                    title: 'My QR Codes',
+                    trailing: StandardHeader.createIconButton(
+                      iconPath: 'assets/images/my_qr_code-page/search.svg',
+                      iconWidth: 12,
+                      iconHeight: 12,
                     ),
-                  ),
-                  IconButton(
-                    icon: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[200],
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/images/my_qr_code-page/search.svg',
-                          width: 12,
-                          height: 12,
-                          fit: BoxFit.contain,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.black,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                    ),
-                    onPressed: () {
+                    onTrailingTap: () {
                       setState(() {
                         _isSearching = !_isSearching;
                         if (!_isSearching) {
@@ -211,53 +286,53 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                       });
                     },
                   ),
+                  // Search bar (if searching)
+                  if (_isSearching)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search QR codes...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                _isSearching = false;
+                                _searchQuery = '';
+                                _searchController.clear();
+                              });
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
+                      ),
+                    ),
+                  // Filter tabs
+                  FilterChips(
+                    filters: _filters,
+                    selectedFilter: _selectedFilter,
+                    onFilterChanged: (filter) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
-            // Search bar (if searching)
-            if (_isSearching)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search QR codes...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        setState(() {
-                          _isSearching = false;
-                          _searchQuery = '';
-                          _searchController.clear();
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
-              ),
-            // Filter tabs
-            FilterChips(
-              filters: _filters,
-              selectedFilter: _selectedFilter,
-              onFilterChanged: (filter) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
             // QR Codes grid
             Expanded(
               child: _filteredCodes.isEmpty
@@ -271,7 +346,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                           : 'Create your first QR code',
                     )
                   : GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -352,17 +427,15 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                       Expanded(
                         child: Text(
                           code.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
+                          style: AppStyles.cardTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => _showOptionsMenu(context, code),
+                        onTapDown: (details) => _showOptionsMenu(
+                            context, code, details.globalPosition),
+                        onTap: () {},
                         child: Container(
                           width: 24,
                           height: 24,
@@ -388,11 +461,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _getSubtitle(code),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal,
-                    ),
+                    style: AppStyles.smallTextGray,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -403,10 +472,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
                     children: [
                       Text(
                         DateFormatter.formatDate(code.createdAt),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
+                        style: AppStyles.cardDate,
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -437,63 +503,6 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showFullSizeQR(SavedQRCode code) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                code.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              QrImageView(
-                data: code.content,
-                version: QrVersions.auto,
-                size: 300,
-                backgroundColor: Colors.white,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _exportQRCode(code);
-                    },
-                    icon: const Icon(Icons.download),
-                    label: const Text('Save'),
-                  ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      await Share.share(code.content);
-                    },
-                    icon: const Icon(Icons.share),
-                    label: const Text('Share'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

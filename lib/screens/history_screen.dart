@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/scan_history_item.dart';
 import '../services/history_service.dart';
 import '../components/filter_chips.dart';
@@ -9,7 +10,8 @@ import '../utils/date_formatter.dart';
 import '../utils/url_helper.dart';
 import '../utils/qr_type_helper.dart';
 import '../utils/navigation_helper.dart';
-import '../utils/dialog_helper.dart';
+import '../constants/app_styles.dart';
+import '../widgets/standard_header.dart';
 import 'result_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final HistoryService _historyService = HistoryService();
   String _selectedFilter = 'All';
+  bool _showFilters = true;
 
   @override
   void initState() {
@@ -95,57 +98,50 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // White background container for header and filters
+            Container(
+              color: Colors.white,
+              child: Column(
                 children: [
-                  const Text(
-                    'History',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      Icons.more_vert,
-                      color: Colors.grey[700],
-                    ),
-                    onSelected: (value) {
-                      if (value == 'clear') {
-                        _clearAllHistory();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'clear',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Clear All History', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
+                  // Header
+                  StandardHeader(
+                    title: 'History',
+                    trailing: Transform.rotate(
+                      angle:
+                          _showFilters ? 0 : 3.14159, // 180 degrees in radians
+                      child: StandardHeader.createIconButton(
+                        iconPath: 'assets/images/history-page/arrow-up.svg',
+                        iconWidth: 16,
+                        iconHeight: 13,
+                        iconColor: const Color(0xFF666666),
                       ),
-                    ],
+                    ),
+                    onTrailingTap: () {
+                      setState(() {
+                        _showFilters = !_showFilters;
+                      });
+                    },
                   ),
+                  // Filter tabs
+                  if (_showFilters) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilterChips(
+                        filters: const ['All', 'Scanned', 'Created'],
+                        selectedFilter: _selectedFilter,
+                        onFilterChanged: (filter) {
+                          setState(() {
+                            _selectedFilter = filter;
+                          });
+                        },
+                        mainAxisAlignment: MainAxisAlignment.start,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
-            // Filter tabs
-            FilterChips(
-              filters: const ['All', 'Scanned', 'Created'],
-              selectedFilter: _selectedFilter,
-              onFilterChanged: (filter) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
             // History list
             Expanded(
               child: groupedHistory.isEmpty
@@ -160,11 +156,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       itemBuilder: (context, index) {
                         final groupKey = sortedKeys[index];
                         final items = groupedHistory[groupKey]!;
+                        final isTodayOrYesterday =
+                            groupKey == 'Today' || groupKey == 'Yesterday';
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: EdgeInsets.only(bottom: 12, top: index > 0 ? 24 : 0),
+                              padding: EdgeInsets.only(
+                                bottom: isTodayOrYesterday ? 24 : 12,
+                                top: isTodayOrYesterday
+                                    ? 24
+                                    : (index > 0 ? 24 : 0),
+                              ),
                               child: Text(
                                 groupKey,
                                 style: const TextStyle(
@@ -186,10 +189,98 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Widget _buildIconWidget(ScanHistoryItem item) {
+    final backgroundColor = QRTypeHelper.getIconColor(item.type, item.action);
+
+    // For Shared action, use shared icon
+    if (item.action == 'Shared') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/shared.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For Created action, use SVG add icon
+    if (item.action == 'Created') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/nav_menu/add.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+            placeholderBuilder: (context) => const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For QR code (scanned items that are not WIFI, CONTACT, or Created)
+    if (item.action != 'Created' &&
+        item.type != 'WIFI' &&
+        item.type != 'CONTACT') {
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/history-page/qr.svg',
+            width: 16,
+            height: 16,
+            colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // For other icons (share, etc.)
+    return IconCircle(
+      icon: QRTypeHelper.getIcon(item.type, item.action),
+      backgroundColor: backgroundColor,
+      iconColor: Colors.white,
+      iconSize: 16,
+    );
+  }
+
   Widget _buildHistoryItem(ScanHistoryItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -216,11 +307,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           child: Row(
             children: [
               // Icon
-              IconCircle(
-                icon: QRTypeHelper.getIcon(item.type, item.action),
-                backgroundColor: QRTypeHelper.getIconColor(item.type, item.action),
-                iconColor: Colors.white,
-              ),
+              _buildIconWidget(item),
               const SizedBox(width: 16),
               // Content
               Expanded(
@@ -228,110 +315,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      QRTypeHelper.getTitle(item.type, item.code, action: item.action),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                      QRTypeHelper.getTitle(item.type, item.code,
+                          action: item.action),
+                      style: AppStyles.bodyMediumText,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       UrlHelper.truncateText(item.code, maxLength: 30),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: AppStyles.caption,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${item.action} • ${DateFormatter.formatTime(item.timestamp)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[500],
-                      ),
+                      style: AppStyles.smallText,
                     ),
                   ],
                 ),
               ),
-              // Action buttons
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ActionButtons(content: item.code),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[200],
-                      ),
-                      child: Icon(
-                        Icons.delete_outline,
-                        size: 16,
-                        color: Colors.red[700],
-                      ),
-                    ),
-                    onPressed: () => _deleteItem(item),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
+              // Action buttons (only copy and share, no delete)
+              ActionButtons(content: item.code),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Future<void> _deleteItem(ScanHistoryItem item) async {
-    final confirmed = await DialogHelper.showConfirmationDialog(
-      context: context,
-      title: 'Delete Item',
-      content: 'Are you sure you want to delete this item from history?',
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
-
-    if (confirmed) {
-      await _historyService.removeScan(item.id);
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Item deleted'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _clearAllHistory() async {
-    final confirmed = await DialogHelper.showConfirmationDialog(
-      context: context,
-      title: 'Clear All History',
-      content: 'Are you sure you want to delete all history? This action cannot be undone.',
-      confirmText: 'Clear All',
-      isDestructive: true,
-    );
-
-    if (confirmed) {
-      await _historyService.clearHistory();
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('All history cleared'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
   }
 }

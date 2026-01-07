@@ -8,9 +8,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../models/scan_history_item.dart';
 import '../services/history_service.dart';
 import '../services/analytics_service.dart';
-import '../services/ads_service.dart';
 import '../utils/qr_parser.dart';
 import '../utils/date_formatter.dart';
+import '../utils/navigation_helper.dart';
+import '../constants/app_styles.dart';
+import '../widgets/standard_header.dart';
+import 'home_screen.dart';
+import 'create_qr_screen.dart';
 
 class ResultScreen extends StatefulWidget {
   final String code;
@@ -373,35 +377,26 @@ class _ResultScreenState extends State<ResultScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar with title and close button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Scan Result',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.black),
-                    onPressed: () {
-                      // Если открыто не из истории, возвращаемся на главную страницу
-                      if (!widget.fromHistory) {
-                        // Закрываем все экраны до главного (HomeScreen)
-                        Navigator.of(context)
-                            .popUntil((route) => route.isFirst);
-                      } else {
-                        // Если открыто из истории, просто закрываем
-                        Navigator.pop(context);
-                      }
-                    },
-                  ),
-                ],
+            // Header
+            Container(
+              color: Colors.white,
+              child: StandardHeader(
+                title: 'Scan Result',
+                trailing: StandardHeader.createIconButton(
+                  iconPath: 'assets/images/creacte-page/cross.svg',
+                  iconWidth: 12,
+                  iconHeight: 12,
+                ),
+                onTrailingTap: () {
+                  // Если открыто не из истории, возвращаемся на главную страницу
+                  if (!widget.fromHistory) {
+                    // Закрываем все экраны до главного (HomeScreen)
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  } else {
+                    // Если открыто из истории, просто закрываем
+                    Navigator.pop(context);
+                  }
+                },
               ),
             ),
             // Content
@@ -412,35 +407,47 @@ class _ResultScreenState extends State<ResultScreen> {
                   children: [
                     // Success indicator - большая зеленая иконка с галочкой
                     Container(
-                      width: 120,
-                      height: 120,
-                      decoration: const BoxDecoration(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xFF77C97E), // Светло-зеленый цвет
+                        color: const Color(0xFF77C97E), // Светло-зеленый цвет
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF77C97E).withValues(alpha: 1.0),
+                            blurRadius: 24,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 0),
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 60,
+                      child: Center(
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Transform.scale(
+                            scaleX: 1.0,
+                            scaleY: 40 / 40,
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
                     // "Scan Successful"
-                    const Text(
+                    Text(
                       'Scan Successful',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                      style: AppStyles.bodyMediumText,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'QR code decoded successfully',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: AppStyles.caption,
                     ),
                     const SizedBox(height: 32),
                     // Main content card
@@ -473,19 +480,12 @@ class _ResultScreenState extends State<ResultScreen> {
                                 children: [
                                   Text(
                                     'Scanned',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
+                                    style: AppStyles.smallTextGray,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     DateFormatter.getTimeAgo(DateTime.now()),
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                    ),
+                                    style: AppStyles.designOptionLabel,
                                   ),
                                 ],
                               ),
@@ -494,19 +494,12 @@ class _ResultScreenState extends State<ResultScreen> {
                                 children: [
                                   Text(
                                     'Type',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
+                                    style: AppStyles.smallTextGray,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     _getTypeString(),
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                    ),
+                                    style: AppStyles.designOptionLabel,
                                   ),
                                 ],
                               ),
@@ -527,17 +520,23 @@ class _ResultScreenState extends State<ResultScreen> {
                           iconPath: 'assets/images/scan_result-page/copy.svg',
                           label: 'Copy',
                           onPressed: _copyToClipboard,
+                          iconWidth: 20,
+                          iconHeight: 20,
                         ),
                         _buildActionButton(
-                          iconPath: 'assets/images/home-page/shared.svg',
+                          iconPath: 'assets/images/scan_result-page/scare.svg',
                           label: 'Share',
                           onPressed: _shareContent,
+                          iconWidth: 18,
+                          iconHeight: 18,
                         ),
                         _buildActionButton(
                           iconPath: 'assets/images/scan_result-page/save.svg',
                           label: 'Save',
                           onPressed: _saveCode,
                           isActive: _isSaved,
+                          iconWidth: 15,
+                          iconHeight: 20,
                         ),
                       ],
                     ),
@@ -545,12 +544,12 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
             ),
-            // Banner ad
-            if (AdsService.instance.shouldShowAds())
-              AdsService.instance.createBannerAd(),
           ],
         ),
       ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+      floatingActionButton: _buildFloatingActionButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
@@ -562,50 +561,64 @@ class _ResultScreenState extends State<ResultScreen> {
           children: [
             Row(
               children: [
-                SvgPicture.asset(
-                  'assets/images/scan_result-page/link.svg',
-                  width: 20,
-                  height: 20,
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFF7ACBFF),
-                    BlendMode.srcIn,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF7ACBFF),
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/images/scan_result-page/link.svg',
+                      width: 24,
+                      height: 18,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Website URL',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Website URL',
+                        style: AppStyles.caption,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _getShortUrl(widget.code),
+                        style: AppStyles.body,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              _getShortUrl(widget.code),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Full Content',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
+              style: AppStyles.caption,
             ),
             const SizedBox(height: 4),
-            Text(
-              widget.code,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                widget.code,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
               ),
             ),
           ],
@@ -749,21 +762,24 @@ class _ResultScreenState extends State<ResultScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Full Content',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
+              style: AppStyles.caption,
             ),
-            const SizedBox(height: 8),
-            SelectableText(
-              widget.code,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black,
-                height: 1.5,
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SelectableText(
+                widget.code,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                  height: 1.5,
+                ),
               ),
             ),
           ],
@@ -821,13 +837,9 @@ class _ResultScreenState extends State<ResultScreen> {
               width: 20,
               height: 20,
             ),
-            label: const Text(
+            label: Text(
               'Open Link',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppStyles.buttonActionText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
@@ -845,13 +857,9 @@ class _ResultScreenState extends State<ResultScreen> {
           child: ElevatedButton.icon(
             onPressed: _callPhone,
             icon: const Icon(Icons.phone, color: Colors.white),
-            label: const Text(
+            label: Text(
               'Call',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppStyles.buttonActionText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green[400],
@@ -868,13 +876,9 @@ class _ResultScreenState extends State<ResultScreen> {
           child: ElevatedButton.icon(
             onPressed: _sendEmail,
             icon: const Icon(Icons.email, color: Colors.white),
-            label: const Text(
+            label: Text(
               'Send Email',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppStyles.buttonActionText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange[400],
@@ -891,13 +895,9 @@ class _ResultScreenState extends State<ResultScreen> {
           child: ElevatedButton.icon(
             onPressed: _addToContacts,
             icon: const Icon(Icons.person_add, color: Colors.white),
-            label: const Text(
+            label: Text(
               'Add to Contacts',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppStyles.buttonActionText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.purple[400],
@@ -914,13 +914,9 @@ class _ResultScreenState extends State<ResultScreen> {
           child: ElevatedButton.icon(
             onPressed: _connectToWiFi,
             icon: const Icon(Icons.wifi, color: Colors.white),
-            label: const Text(
+            label: Text(
               'Connect to WiFi',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppStyles.buttonActionText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.cyan[400],
@@ -941,6 +937,8 @@ class _ResultScreenState extends State<ResultScreen> {
     required String label,
     required VoidCallback onPressed,
     bool isActive = false,
+    double iconWidth = 24,
+    double iconHeight = 24,
   }) {
     return Expanded(
       child: Padding(
@@ -963,8 +961,8 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               SvgPicture.asset(
                 iconPath,
-                width: 24,
-                height: 24,
+                width: iconWidth,
+                height: iconHeight,
                 colorFilter: ColorFilter.mode(
                   isActive ? const Color(0xFF7ACBFF) : const Color(0xFF5A5A5A),
                   BlendMode.srcIn,
@@ -973,10 +971,10 @@ class _ResultScreenState extends State<ResultScreen> {
               const SizedBox(height: 8),
               Text(
                 label,
-                style: TextStyle(
-                  color: isActive ? const Color(0xFF7ACBFF) : Colors.grey[700],
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                style: AppStyles.cardTitle.copyWith(
+                  color: isActive
+                      ? const Color(0xFF7ACBFF)
+                      : const Color(0xFF5A5A5A),
                 ),
               ),
             ],
@@ -985,4 +983,201 @@ class _ResultScreenState extends State<ResultScreen> {
       ),
     );
   }
+
+  Widget _buildFloatingActionButton() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.green[400],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            final result = await NavigationHelper.push(
+              context,
+              const CreateQRScreen(),
+            );
+            // Если вернулся индекс таба, закрываем ResultScreen и переходим на HomeScreen
+            if (result != null && result is int && mounted) {
+              Navigator.of(context).pop();
+              NavigationHelper.pushAndRemoveUntil(
+                context,
+                HomeScreen(initialTabIndex: result),
+              );
+            }
+          },
+          borderRadius: BorderRadius.circular(28),
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return ClipPath(
+      clipper: _BottomNavBarClipper(),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Container(
+            height: 90,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem('assets/images/nav_menu/home.svg', 'Home', 0),
+                _buildNavItem('assets/images/nav_menu/scan.svg', 'Scan QR', 1),
+                const SizedBox(width: 60), // Space for FAB
+                _buildNavItem(
+                    'assets/images/nav_menu/my_qr_code.svg', 'My QR Codes', 2),
+                _buildNavItem(
+                    'assets/images/nav_menu/history-png.png', 'History', 3),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(String iconPath, String label, int index) {
+    const inactiveColor = Color(0xFFB0B0B0); // Grey color
+
+    final bool isSvg = iconPath.toLowerCase().endsWith('.svg');
+    final bool isPng = iconPath.toLowerCase().endsWith('.png');
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          _navigateToScreen(index);
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                if (isSvg)
+                  SvgPicture.asset(
+                    iconPath,
+                    width: 24,
+                    height: 24,
+                    placeholderBuilder: (context) => Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.transparent,
+                    ),
+                    semanticsLabel: label,
+                  )
+                else if (isPng)
+                  Image.asset(
+                    iconPath,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: AppStyles.tabBarLabel.copyWith(
+                color: inactiveColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToScreen(int index) {
+    // Закрываем ResultScreen и переходим на HomeScreen с нужным табом
+    Navigator.of(context).pop();
+    NavigationHelper.pushAndRemoveUntil(
+      context,
+      HomeScreen(initialTabIndex: index),
+    );
+  }
+}
+
+// Custom clipper для создания выемки в навигационной панели
+class _BottomNavBarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    const notchWidth = 80.0; // Длина выемки
+    const notchDepth = 25.0; // Глубина выемки
+    final centerX = size.width / 2;
+
+    // Начинаем с левого верхнего угла
+    path.moveTo(0, 0);
+
+    // Верхняя линия до начала выемки слева
+    const transitionWidth = 15.0; // Ширина переходной зоны
+    path.lineTo(centerX - notchWidth / 2 - transitionWidth, 0);
+
+    // Левая часть выемки (симметричная плавная кривая вниз)
+    path.cubicTo(
+      centerX - notchWidth / 2 - transitionWidth * 0.5,
+      0,
+      centerX - notchWidth / 2 - transitionWidth * 0.2,
+      notchDepth * 1,
+      centerX - notchWidth / 2,
+      notchDepth,
+    );
+
+    // Нижняя часть выемки (симметричный полукруг до максимальной глубины)
+    path.arcToPoint(
+      Offset(centerX + notchWidth / 2, notchDepth),
+      radius: const Radius.elliptical(notchWidth / 2, notchDepth),
+      clockwise: false,
+    );
+
+    // Правая часть выемки (симметричная плавная кривая вверх)
+    path.cubicTo(
+      centerX + notchWidth / 2 + transitionWidth * 0.2,
+      notchDepth * 1,
+      centerX + notchWidth / 2 + transitionWidth * 0.5,
+      0,
+      centerX + notchWidth / 2 + transitionWidth,
+      0,
+    );
+
+    // Верхняя линия до правого края
+    path.lineTo(size.width, 0);
+
+    // Правый край
+    path.lineTo(size.width, size.height);
+
+    // Нижняя линия
+    path.lineTo(0, size.height);
+
+    // Закрываем путь
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

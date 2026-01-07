@@ -27,9 +27,11 @@ dependencies:
   flutter_contacts: ^1.1.7
   path_provider: ^2.1.4
   appsflyer_sdk: ^6.6.0
+  apphud: ^3.0.1
   flutter_localizations:
     sdk: flutter
   http: ^1.2.0
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +61,7 @@ flutter:
     - assets/images/
     - assets/images/screen/bg-loading.png
     - assets/images/nav_menu/plus.svg
+    - assets/images/nav_menu/add.svg
     - assets/images/nav_menu/home.svg
     - assets/images/nav_menu/scan.svg
     - assets/images/nav_menu/my_qr_code.svg
@@ -67,6 +70,7 @@ flutter:
     - assets/images/nav_menu/scan-activ.svg
     - assets/images/nav_menu/my_qr_code-activ.svg
     - assets/images/nav_menu/history-activ.svg
+    - assets/images/nav_menu/history-png.png
     - assets/images/home-page/link.svg
     - assets/images/home-page/plus.svg
     - assets/images/home-page/shared.svg
@@ -84,4 +88,22 @@ flutter:
     - assets/images/my_qr_code-page/qr.svg
     - assets/images/my_qr_code-page/dots.svg
     - assets/images/my_qr_code-page/eye.svg
+    - assets/images/my_qr_code-page/menu/shared.svg
+    - assets/images/my_qr_code-page/menu/edit.svg
+    - assets/images/my_qr_code-page/menu/delete.svg
+    - assets/images/subscr-page/qr.svg
+    - assets/images/subscr-page/inf.svg
+    - assets/images/subscr-page/color.svg
+    - assets/images/subscr-page/shild.svg
+    - assets/images/subscr-page/cloud.svg
+    - assets/images/subscr-page/graf.svg
+    - assets/images/subscr-page/cross.svg
+    - assets/images/history-page/copy.svg
+    - assets/images/history-page/shared.svg
+    - assets/images/history-page/qr.svg
+    - assets/images/history-page/arrow-up.svg
+    - assets/images/scan-qr-page/flash.svg
+    - assets/images/scan-qr-page/gallery.svg
+    - assets/images/scan-qr-page/switch.svg
+    - assets/images/scan-qr-page/i.svg
 

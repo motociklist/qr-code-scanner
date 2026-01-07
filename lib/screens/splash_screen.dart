@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
                     _buildAppIcon(),
                     const SizedBox(height: 24),
                     // "QR Master" - exactly in center
-                    const Text(
+                    Text(
                       'QR Master',
                       style: AppStyles.largeTitle,
                       textAlign: TextAlign.center,

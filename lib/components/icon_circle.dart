@@ -13,7 +13,7 @@ class IconCircle extends StatelessWidget {
     required this.backgroundColor,
     required this.iconColor,
     this.size = 48,
-    this.iconSize = 24,
+    this.iconSize = 16,
   });
 
   @override
