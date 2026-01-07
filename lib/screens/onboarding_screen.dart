@@ -161,6 +161,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
+                        begin: Alignment.center,
+                        end: Alignment.topRight,
                         colors: [
                           Color(0xFF7ACBFF), // 0% - light blue
                           Color(0xFF4DA6FF), // 100% - darker blue
@@ -204,7 +206,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 child: TextButton(
                   onPressed: _skipOnboarding,
                   child: Text(
-                    'Skip',
+                    _currentPage == _pages.length - 1 ? '' : 'Skip',
                     style: AppStyles.body.copyWith(
                       color: Colors.black,
                     ),
