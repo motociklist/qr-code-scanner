@@ -86,5 +86,21 @@ class SavedQRService extends ChangeNotifier {
     }
     return List.unmodifiable(_savedCodes.where((code) => code.type == type).toList());
   }
+
+  SavedQRCode? getCodeByContent(String content) {
+    try {
+      return _savedCodes.firstWhere((code) => code.content == content);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> incrementViewCountByContent(String content) async {
+    await loadSavedCodes();
+    final code = getCodeByContent(content);
+    if (code != null) {
+      await incrementViewCount(code.id);
+    }
+  }
 }
 

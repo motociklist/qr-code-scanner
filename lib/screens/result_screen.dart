@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../models/scan_history_item.dart';
 import '../services/history_service.dart';
 import '../services/analytics_service.dart';
+import '../services/saved_qr_service.dart';
 import '../utils/qr_parser.dart';
 import '../utils/date_formatter.dart';
 import '../utils/navigation_helper.dart';
@@ -49,6 +50,11 @@ class _ResultScreenState extends State<ResultScreen> {
 
     // Проверяем сохраненность при инициализации
     _checkIfSaved();
+
+    // Если открыто из истории, увеличиваем счетчик просмотров для сохраненного QR кода
+    if (widget.fromHistory) {
+      _incrementViewCountIfSaved();
+    }
 
     if (!widget.fromHistory) {
       AnalyticsService.instance.logQRScan(_qrType.name);
@@ -121,6 +127,11 @@ class _ResultScreenState extends State<ResultScreen> {
         _savedHistoryId = savedItem?.id;
       });
     }
+  }
+
+  Future<void> _incrementViewCountIfSaved() async {
+    // Увеличиваем счетчик просмотров для сохраненного QR кода, если он существует
+    await SavedQRService.instance.incrementViewCountByContent(widget.code);
   }
 
   Future<void> _removeFromHistory() async {

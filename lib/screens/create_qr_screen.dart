@@ -34,6 +34,8 @@ class _CreateQRScreenState extends State<CreateQRScreen> {
     _initializeControllers();
     if (widget.editingCode != null) {
       _loadEditingCode();
+      // Увеличиваем счетчик просмотров при открытии редактирования
+      SavedQRService.instance.incrementViewCount(widget.editingCode!.id);
     }
     AnalyticsService.instance.logScreenView('create_qr_screen');
   }
