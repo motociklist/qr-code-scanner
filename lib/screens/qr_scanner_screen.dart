@@ -45,6 +45,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   bool _isScanning = true;
   String? _scannedCode;
   bool _isTorchOn = false;
+  bool _isSwitchActive = false;
+  bool _isGalleryActive = false;
   late AnimationController _scanLineController;
   late Animation<double> _scanLineAnimation;
 
@@ -244,6 +246,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     if (kIsWeb) return; // Torch not supported on web
     setState(() {
       _isTorchOn = !_isTorchOn;
+      // Деактивируем другие кнопки
+      _isSwitchActive = false;
+      _isGalleryActive = false;
     });
     try {
       controller.toggleTorch();
@@ -254,10 +259,32 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   void _switchCamera() {
     if (kIsWeb) return; // Camera switching not fully supported on web
+    setState(() {
+      _isSwitchActive = !_isSwitchActive;
+      // Деактивируем другие кнопки
+      _isTorchOn = false;
+      _isGalleryActive = false;
+    });
     try {
       controller.switchCamera();
     } catch (e) {
       debugPrint('Error switching camera: $e');
+    }
+  }
+
+  Future<void> _toggleGallery() async {
+    setState(() {
+      _isGalleryActive = true;
+      // Деактивируем другие кнопки
+      _isTorchOn = false;
+      _isSwitchActive = false;
+    });
+    await _pickImageFromGallery();
+    // Деактивируем кнопку после завершения выбора
+    if (mounted) {
+      setState(() {
+        _isGalleryActive = false;
+      });
     }
   }
 
@@ -457,13 +484,15 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             iconPath: 'assets/images/scan-qr-page/switch.svg',
             label: 'Switch',
             onPressed: _switchCamera,
+            isActive: _isSwitchActive,
             iconWidth: 18,
             iconHeight: 16,
           ),
           _buildControlButton(
             iconPath: 'assets/images/scan-qr-page/gallery.svg',
             label: 'Gallery',
-            onPressed: _pickImageFromGallery,
+            onPressed: _toggleGallery,
+            isActive: _isGalleryActive,
             iconWidth: 18,
             iconHeight: 16,
           ),
@@ -488,9 +517,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           child: Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFFF6F7FA),
+              color: isActive ? const Color(0xFF7ACBFF) : const Color(0xFFF6F7FA),
             ),
             child: Center(
               child: SvgPicture.asset(
@@ -498,7 +527,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                 width: iconWidth ?? 24,
                 height: iconHeight ?? 24,
                 colorFilter: ColorFilter.mode(
-                  isActive ? const Color(0xFF7ACBFF) : const Color(0xFF5A5A5A),
+                  isActive ? Colors.white : const Color(0xFF5A5A5A),
                   BlendMode.srcIn,
                 ),
               ),
