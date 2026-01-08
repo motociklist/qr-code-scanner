@@ -16,6 +16,7 @@ import '../constants/app_styles.dart';
 import '../utils/navigation_helper.dart';
 import '../widgets/standard_header.dart';
 import 'create_qr_screen.dart';
+import 'result_screen.dart';
 
 class MyQRCodesScreen extends StatefulWidget {
   const MyQRCodesScreen({super.key});
@@ -368,19 +369,31 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
   }
 
   Widget _buildQRCodeCard(SavedQRCode code) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: () async {
+        // Увеличиваем счетчик просмотров
+        await _savedQRService.incrementViewCount(code.id);
+        // Открываем экран с деталями QR кода
+        if (mounted) {
+          NavigationHelper.push(
+            context,
+            ResultScreen(code: code.content),
+          );
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Top section with blue block containing QR icon
@@ -503,6 +516,7 @@ class _MyQRCodesScreenState extends State<MyQRCodesScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
