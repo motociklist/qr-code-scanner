@@ -519,7 +519,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive ? const Color(0xFF7ACBFF) : const Color(0xFFF6F7FA),
+              color:
+                  isActive ? const Color(0xFF7ACBFF) : const Color(0xFFF6F7FA),
             ),
             child: Center(
               child: SvgPicture.asset(
